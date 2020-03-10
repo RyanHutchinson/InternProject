@@ -1,0 +1,3877 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-10 16:30:05">
+<Class name="PManager.API.REST">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+<p>Transforms <b><i>CRUD</i></b> method requests, via Routes(<i>see below</i>), into JSON format,<br/>
+and pipes them into the relevant Production Service
+</p>
+<font size="2"><p><b>URL MAP:</b> </p>
+<ul>
+	<li>'/EditPerson' : POST -> AddPerson()</li>
+	<li>'/EditPerson' : UPDATE -> UpdatePerson()</li>
+	<li>'/EditPerson' : DELETE -> DeletePerson()</li>
+	<li>'/ViewPerson' : GET -> GetPerson()</li>
+	</ul></font>]]></Description>
+<Super>%RegisteredObject,%CSP.REST</Super>
+<TimeChanged>65447,59597.564271</TimeChanged>
+<TimeCreated>65436,35072.873029</TimeCreated>
+
+<XData name="UrlMap">
+<XMLNamespace>http://www.intersystems.com/urlmap</XMLNamespace>
+<Data><![CDATA[
+<Routes>
+<Route Url="/EditPerson" Method="POST" Call="AddPerson" />
+<Route Url="/EditPerson" Method="PUT" Call="UpdatePerson" />
+<Route Url="/EditPerson" Method="DELETE" Call="DeletePerson" />
+<Route Url="/ViewPerson" Method="GET" Call="GetPerson" />
+</Routes>
+]]></Data>
+</XData>
+
+<Method name="AddPerson">
+<Description><![CDATA[
+<FONT size="2">Creates a <class>%DynamicObject</class>...</br>
+	Populates it from Http Methods %Request.Content...</br>
+	and sends it onto <class>PManager.Service.RESTAddPerson</class></FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		set tMessageToSend = ##class(%DynamicObject).%FromJSON(%request.Content) //convert JSON to DynamicObject
+		$$$ThrowOnError(tMessageToSend.%Set("Type","ADD"))
+		$$$ThrowOnError(##class(Ens.Director).CreateBusinessService("RESTService", .tService)) //make an instance of a service ("name", .into)
+		$$$ThrowOnError(tService.ProcessInput(tMessageToSend, .output)) //Send the obj to Production
+		write output.Response
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		write sc
+	}
+	quit 1 //always quit 1 because of reasons I dont understand
+]]></Implementation>
+</Method>
+
+<Method name="UpdatePerson">
+<Description><![CDATA[
+<FONT size="2">Creates a <class>Pmanager.Message.UpdatePersonRequest</class>...</br>
+	Populates it from Http Methods %Request.Content...</br>
+	and sends it onto <class>PManager.Service.REST</class></FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		set tMessageToSend = ##class(%DynamicObject).%FromJSON(%request.Content) //convert JSON to DynamicObject
+		$$$ThrowOnError(tMessageToSend.%Set("Type","UPDATE"))
+		$$$ThrowOnError(##class(Ens.Director).CreateBusinessService("RESTService", .tService)) //make an instance of a service ("name", .into)
+		$$$ThrowOnError(tService.ProcessInput(tMessageToSend, .output)) //Send the obj to Production
+		write output.Response
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		write sc
+	}
+	quit 1 //always quit 1 because of reasons I dont understand
+]]></Implementation>
+</Method>
+
+<Method name="DeletePerson">
+<Description><![CDATA[
+<FONT size="2">Creates a <class>%DynamicObject</class>...</br>
+	Populates it from Http Methods %Request.Content...</br>
+	and sends it onto <class>PManager.Service.RESTDeletePerson</class></FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		set tMessageToSend = ##class(%DynamicObject).%New() //Make new Dynamic Object
+		if $Data(%request.Data("IDNumber",1)){
+			$$$ThrowOnError(tMessageToSend.%Set("Type","DELETE"))
+			$$$ThrowOnError(tMessageToSend.%Set("IDNumber", %request.Data("IDNumber",1)))
+			$$$ThrowOnError(##class(Ens.Director).CreateBusinessService("RESTService", .tService)) //make an instance of a service ("name", .into)
+			$$$ThrowOnError(tService.ProcessInput(tMessageToSend, .output)) //Send the obj to Production
+			write output.Response
+		} else {
+			write "Invalid HTTP Request Parameters"
+		}
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		write sc
+	}
+	quit 1 //always quit 1 because of reasons I dont understand
+]]></Implementation>
+</Method>
+
+<Method name="GetPerson">
+<Description><![CDATA[
+<FONT size="2">Creates a <class>%DynamicObject</class>...</br>
+	Populates it from Http Methods %Request.Content...</br>
+	and sends it onto <class>PManager.Service.RESTGetPerson</class></FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		if $Data(%request.Data("IDNumber",1)){
+			set tMessageToSend = ##class(%DynamicObject).%New() //Make new Dynamic Object
+			$$$ThrowOnError(tMessageToSend.%Set("Type","GET"))
+			$$$ThrowOnError(tMessageToSend.%Set("IDNumber", %request.Data("IDNumber",1)))
+			$$$ThrowOnError(##class(Ens.Director).CreateBusinessService("RESTService", .tService)) //make an instance of a service ("name", .into)
+			$$$ThrowOnError(tService.ProcessInput(tMessageToSend, .output)) //Send the obj to Production
+			
+			if (output.Response = ""){
+				set tJSON = {
+					"FirstName":(output.FirstName),
+					"LastName":(output.LastName),
+					"ContactNumber":(output.ContactNumber),
+					"Gender":(output.Gender),
+					"Member":(output.Member),
+					"DateOfBirth":($ZDate(output.DateOfBirth))
+				}
+				write tJSON.%ToJSON()
+			} else {
+				write output.Response
+			} 
+		} else {
+			write "Invalid HTTP Request Parameters"
+		}
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		write sc
+	}
+	quit 1 //always quit 1 because of reasons I don't understand
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="PManager.Message.Request">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.Request</Super>
+<TimeChanged>65447,41202.38079</TimeChanged>
+<TimeCreated>65447,41066.682992</TimeCreated>
+
+<Property name="Type">
+<Type>%String</Type>
+</Property>
+
+<Property name="FirstName">
+<Type>%String</Type>
+</Property>
+
+<Property name="LastName">
+<Type>%String</Type>
+</Property>
+
+<Property name="IDNumber">
+<Type>%String</Type>
+</Property>
+
+<Property name="ContactNumber">
+<Description>
+RSA CellphoneNumber</Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="Gender">
+<Type>%String</Type>
+<Parameter name="DISPLAYLIST" value=",Male,Female,Other"/>
+<Parameter name="VALUELIST" value=",1,2,3"/>
+</Property>
+
+<Property name="Member">
+<Description>
+Member Status(1-Member, 0-NonMember)</Description>
+<Type>%Boolean</Type>
+</Property>
+
+<Property name="DateOfBirth">
+<Description>
+$HORLOG Date Format</Description>
+<Type>%Date</Type>
+</Property>
+
+<Property name="Dependants">
+<Description>
+Number of Dependants</Description>
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Response">
+<Type>%String</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>RequestDefaultData</DefaultData>
+<Data name="RequestDefaultData">
+<Subscript>"Request"</Subscript>
+<Value name="1">
+<Value>FirstName</Value>
+</Value>
+<Value name="2">
+<Value>LastName</Value>
+</Value>
+<Value name="3">
+<Value>IDNumber</Value>
+</Value>
+<Value name="4">
+<Value>ContactNumber</Value>
+</Value>
+<Value name="5">
+<Value>Gender</Value>
+</Value>
+<Value name="6">
+<Value>Member</Value>
+</Value>
+<Value name="7">
+<Value>DateOfBirth</Value>
+</Value>
+<Value name="8">
+<Value>Dependants</Value>
+</Value>
+<Value name="9">
+<Value>Type</Value>
+</Value>
+<Value name="10">
+<Value>Response</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Message.Response">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.Response</Super>
+<TimeChanged>65447,41221.406332</TimeChanged>
+<TimeCreated>65447,41126.361527</TimeCreated>
+
+<Property name="Type">
+<Type>%String</Type>
+</Property>
+
+<Property name="FirstName">
+<Type>%String</Type>
+</Property>
+
+<Property name="LastName">
+<Type>%String</Type>
+</Property>
+
+<Property name="IDNumber">
+<Type>%String</Type>
+</Property>
+
+<Property name="ContactNumber">
+<Description>
+RSA CellphoneNumber</Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="Gender">
+<Type>%String</Type>
+<Parameter name="DISPLAYLIST" value=",Male,Female,Other"/>
+<Parameter name="VALUELIST" value=",1,2,3"/>
+</Property>
+
+<Property name="Member">
+<Description>
+Member Status(1-Member, 0-NonMember)</Description>
+<Type>%Boolean</Type>
+</Property>
+
+<Property name="DateOfBirth">
+<Description>
+$HORLOG Date Format</Description>
+<Type>%Date</Type>
+</Property>
+
+<Property name="Dependants">
+<Description>
+Number of Dependants</Description>
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Response">
+<Type>%String</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>ResponseDefaultData</DefaultData>
+<Data name="ResponseDefaultData">
+<Subscript>"Response"</Subscript>
+<Value name="1">
+<Value>FirstName</Value>
+</Value>
+<Value name="2">
+<Value>LastName</Value>
+</Value>
+<Value name="3">
+<Value>IDNumber</Value>
+</Value>
+<Value name="4">
+<Value>ContactNumber</Value>
+</Value>
+<Value name="5">
+<Value>Gender</Value>
+</Value>
+<Value name="6">
+<Value>Member</Value>
+</Value>
+<Value name="7">
+<Value>DateOfBirth</Value>
+</Value>
+<Value name="8">
+<Value>Dependants</Value>
+</Value>
+<Value name="9">
+<Value>Type</Value>
+</Value>
+<Value name="10">
+<Value>Response</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Operation.AddPerson">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+	Written by R.Hutchinson</br>
+	(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+Adds a new <class>PManager.Person</class> to the MODEL]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65447,54505.911531</TimeChanged>
+<TimeCreated>65437,30176.7596</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="AddPerson">
+<Description><![CDATA[
+<font size="2">Makes a new <class>Pmanager.Person</class>...<br>
+populates it from pRequest and saves it...<br>
+sends a response via pResponse</font>]]></Description>
+<FormalSpec>pRequest:PManager.Message.Request,*pResponse:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set pResponse = ##class(PManager.Message.Response).%New()
+	try {
+		//check for duplicate	
+		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
+		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
+		if tPerson {set pResponse.Response = "Person Already Exists..."}
+		// Insert Person
+		else {
+			set newPerson = ##class(PManager.Person).%New()
+			set newPerson.FirstName = pRequest.FirstName
+			set newPerson.LastName = pRequest.LastName
+			set newPerson.IDNumber = pRequest.IDNumber
+			set newPerson.ContactNumber = pRequest.ContactNumber
+			set newPerson.Gender = pRequest.Gender
+			set newPerson.Member = pRequest.Member
+			set newPerson.DateOfBirth = pRequest.DateOfBirth
+			set newPerson.Dependants = pRequest.Dependants
+			$$$ThrowOnError(newPerson.%Save())
+			set pResponse.Response = "Client added..."
+		}
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		set pResponse.Response = "Something went wrong with the Business ADD Operation"
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="PManager.Message.Request"> 
+		<Method>AddPerson</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Operation.DeletePerson">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+	Written by R.Hutchinson</br>
+	(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+Deletes a <class>PManager.Person</class> in the MODEL]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65447,54331.085511</TimeChanged>
+<TimeCreated>65437,31453.60449</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="DeletePerson">
+<Description><![CDATA[
+<font size="2">Deletes a <class>Pmanager.Person</class></br>
+found via pRequest.ID<br>
+sends a response via pResponse</font>]]></Description>
+<FormalSpec>pRequest:PManager.Message.Request,*pResponse:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set pResponse = ##class(PManager.Message.Response).%New()
+	try {
+		//check for duplicate
+		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
+		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
+		if 'tPerson {set pResponse.Response = "No Such Person..."}
+		//Do the Delete
+		else {
+			TStart 
+			$$$ThrowOnError(##class(PManager.Person).IDNumberIndexDelete(pRequest.IDNumber))
+			set pResponse.Response = "Person Deleted..."
+			TCommit 
+		}
+	} catch ex {
+		TROllback 1
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		set pResponse.Response = "Something went wrong with the Business DELETE Operation"
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="PManager.Message.Request"> 
+		<Method>DeletePerson</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Operation.GetPerson">
+<Description><![CDATA[
+	<font color="green", size="1"><i>
+	Written by R.Hutchinson</br>
+	(+27)72 606 0326</br>
+	<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+		<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+	<hr>
+		Gets and returns a specific <class>PManager.Person</class>'s data]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65447,54483.75162</TimeChanged>
+<TimeCreated>65437,29586.119493</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="GetPerson">
+<Description><![CDATA[
+	<font size="2">Finds a <class>Pmanager.Person</class> from MODEL using pRequest...<br>
+		and pupulates said data into the outbound pResponse</font>]]></Description>
+<FormalSpec>pRequest:PManager.Message.Request,*pResponse:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set pResponse = ##class(PManager.Message.Response).%New()
+	try {
+		//check for person
+		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
+		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
+		if 'tPerson {set pResponse.Response = "No Such Person..."}
+		//Do the Get
+		else {
+			TStart 
+			set tPerson = ##class(PManager.Person).IDNumberIndexOpen(pRequest.IDNumber)
+			set pResponse.FirstName = tPerson.FirstName
+			set pResponse.LastName = tPerson.LastName
+			set pResponse.IDNumber = tPerson.IDNumber
+			set pResponse.ContactNumber = tPerson.ContactNumber
+			set pResponse.Gender = tPerson.Gender
+			set pResponse.Member = tPerson.Member
+			set pResponse.DateOfBirth = tPerson.DateOfBirth
+			set pResponse.Dependants = tPerson.Dependants
+			TCommit 
+		}
+	} catch ex {
+		TROllback 1
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		set pResponse.Response = "Something went wrong with the Business GET Operation"
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="PManager.Message.Request"> 
+		<Method>GetPerson</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Operation.UpdatePerson">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+	Written by R.Hutchinson</br>
+	(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+Updates a <class>PManager.Person</class> in the MODEL]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65447,54493.05161</TimeChanged>
+<TimeCreated>65437,31235.860713</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="UpdatePerson">
+<Description><![CDATA[
+<font size="2">Updates a <class>Pmanager.Person</class> found via pRequest.ID<br>
+Updates from pRequest.*<br>
+sends a response via pResponse</font>]]></Description>
+<FormalSpec>pRequest:PManager.Message.Request,*pResponse:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set pResponse = ##class(PManager.Message.Response).%New()
+	try {
+		//check for Person
+		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
+		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
+		if 'tPerson {set pResponse.Response = "No Such Person..."}
+		//Do the Update
+		else {
+			TStart 
+			set Person = ##class(PManager.Person).IDNumberIndexOpen(pRequest.IDNumber)
+			if pRequest.FirstName '= "" {set Person.FirstName = pRequest.FirstName}
+			if pRequest.LastName '= "" {set Person.LastName = pRequest.LastName}
+			if pRequest.ContactNumber '= "" {set Person.ContactNumber = pRequest.ContactNumber}
+			if pRequest.Member '= Person.Member{set Person.Member = pRequest.Member}
+			if pRequest.Dependants > -1 {set Person.Dependants = pRequest.Dependants}
+			$$$ThrowOnError(Person.%Save())
+			TCommit 
+			set pResponse.Response = "Person Updated"
+		}
+	} catch ex {
+		TROllback 1
+		if sc = $$$OK {set sc = ex.AsStatus()}
+		set pResponse.Response = "Something went wrong with the Business Operation"
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="PManager.Message.Request"> 
+		<Method>UpdatePerson</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.PManagerProd">
+<Super>Ens.Production</Super>
+<TimeChanged>65448,58562.515046</TimeChanged>
+<TimeCreated>65437,33262.61679</TimeCreated>
+
+<XData name="ProductionDefinition">
+<Data><![CDATA[
+<Production Name="PManager.PManagerProd" TestingEnabled="true" LogGeneralTraceEvents="false">
+  <Description>Full Production for the Intern Person Manager project</Description>
+  <ActorPoolSize>2</ActorPoolSize>
+  <Item Name="AddPerson" Category="" ClassName="PManager.Operation.AddPerson" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="DeletePerson" Category="" ClassName="PManager.Operation.DeletePerson" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="GetPerson" Category="" ClassName="PManager.Operation.GetPerson" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="UpdatePerson" Category="" ClassName="PManager.Operation.UpdatePerson" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="RESTService" Category="" ClassName="PManager.Service.RESTService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="LocalInterface">127.0.0.1 (any IPv4)</Setting>
+    <Setting Target="Adapter" Name="Port">8080</Setting>
+  </Item>
+  <Item Name="CRUDProcess" Category="" ClassName="PManager.Process.RESTProcess" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="FILEProcess" Category="" ClassName="PManager.Process.FILEProcess" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="ComplexBatchFILEService" Category="" ClassName="EnsLib.RecordMap.Service.ComplexBatchFileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="ComplexMap">PManager.RecordMaps.Person.CRM.PersonCRM</Setting>
+    <Setting Target="Host" Name="SynchronousSend">1</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">CRMIterator</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">C:\InterSystems\IRIS\CSP\personmanager\Flat Files\Completed\</Setting>
+    <Setting Target="Adapter" Name="FilePath">C:\InterSystems\IRIS\CSP\personmanager\Flat Files\</Setting>
+    <Setting Target="Adapter" Name="FileSpec">*CRMBATCH.csv</Setting>
+    <Setting Target="Adapter" Name="WorkPath">C:\InterSystems\IRIS\CSP\personmanager\Flat Files\InProcess\</Setting>
+  </Item>
+  <Item Name="CRMIterator" Category="" ClassName="PManager.Process.test" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+</Production>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Person">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+Person persistent object]]></Description>
+<Super>%Persistent</Super>
+<TimeChanged>65441,49962.670644</TimeChanged>
+<TimeCreated>65436,42495.605702</TimeCreated>
+
+<Property name="FirstName">
+<Description><![CDATA[
+<font size="2">No Maxlen</font>]]></Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="LastName">
+<Description><![CDATA[
+<font size="2">No Maxlen</font>]]></Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="IDNumber">
+<Description><![CDATA[
+<font size="2">RSA ID Number 'YYMMDD G SSS C A Z'</font>]]></Description>
+<Type>%String</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="IDNumberIndex">
+<Properties>IDNumber</Properties>
+<Unique>1</Unique>
+</Index>
+
+<Property name="ContactNumber">
+<Description><![CDATA[
+<font size="2">RSA CellphoneNumber</font>]]></Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="Gender">
+<Description><![CDATA[
+<font size="2">Male,Female,Other</font>]]></Description>
+<Type>%EnumString</Type>
+<Parameter name="DISPLAYLIST" value=",Male,Female"/>
+<Parameter name="VALUELIST" value=",1,2"/>
+</Property>
+
+<Property name="Member">
+<Description><![CDATA[
+<font size="2">Member Status(1-Member, 0-NonMember)</font>]]></Description>
+<Type>%Boolean</Type>
+</Property>
+
+<Property name="DateOfBirth">
+<Description><![CDATA[
+<font size="2">$HORLOG Date Format</font>]]></Description>
+<Type>%Date</Type>
+</Property>
+
+<Property name="Dependants">
+<Description><![CDATA[
+<font size="2">Number of Dependants</font>]]></Description>
+<Type>%Integer</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.PersonD</DataLocation>
+<DefaultData>PersonDefaultData</DefaultData>
+<IdLocation>^PManager.PersonD</IdLocation>
+<IndexLocation>^PManager.PersonI</IndexLocation>
+<StreamLocation>^PManager.PersonS</StreamLocation>
+<Data name="PersonDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>FirstName</Value>
+</Value>
+<Value name="3">
+<Value>LastName</Value>
+</Value>
+<Value name="4">
+<Value>IDNumber</Value>
+</Value>
+<Value name="5">
+<Value>ContactNumber</Value>
+</Value>
+<Value name="6">
+<Value>Gender</Value>
+</Value>
+<Value name="7">
+<Value>Member</Value>
+</Value>
+<Value name="8">
+<Value>DateOfBirth</Value>
+</Value>
+<Value name="9">
+<Value>Dependants</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.FILEProcess.Context">
+<Description>
+This class is generated by the PManager.Process.FILEProcess BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.FILEProcess</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Context</Super>
+<TimeChanged>65448,58541.049054</TimeChanged>
+<TimeCreated>65448,29183.21757</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Property name="ParsedMessage">
+<Type>PManager.Message.Request</Type>
+</Property>
+
+<Property name="sc">
+<Type>%Status</Type>
+<InitialExpression>$$$OK</InitialExpression>
+</Property>
+
+<Property name="scMessage">
+<Type>%String</Type>
+<Parameter name="MAXLEN" value="50"/>
+</Property>
+
+<Method name="%OnNew">
+<FormalSpec>initvalue</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	If '$IsObject(..ParsedMessageNewObject()) Quit %objlasterror
+	Quit ##super(initvalue)
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse1">
+<Description>
+Response Handler for call to AddPerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.FILEProcess.Thread1","OnResponse1")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse2">
+<Description>
+Response Handler for call to DeletePerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.FILEProcess.Thread1","OnResponse2")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse3">
+<Description>
+Response Handler for call to GetPerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.FILEProcess.Thread1","OnResponse3")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse4">
+<Description>
+Response Handler for call to UpdatePerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.FILEProcess.Thread1","OnResponse4")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>ContextDefaultData1</DefaultData>
+<Data name="ContextDefaultData1">
+<Structure>listnode</Structure>
+<Subscript>"Context"</Subscript>
+<Value name="1">
+<Value>ParsedMessage</Value>
+</Value>
+<Value name="2">
+<Value>sc</Value>
+</Value>
+<Value name="3">
+<Value>scMessage</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.FILEProcess.Thread1">
+<Description>
+This class is generated by the PManager.Process.FILEProcess BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.FILEProcess</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Thread</Super>
+<TimeChanged>65448,58541.721538</TimeChanged>
+<TimeCreated>65448,58541.022172</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Method name="S1">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set iscTemp=context.ParsedMessage
+ Set status=$classmethod("PManager.RulesAndTransforms.Transform.PDATAtoRequest","Transform",request,.iscTemp,"")
+ If $$$ISERR(status) Quit
+ Set context.ParsedMessage=iscTemp
+ Set context.%Process = process
+ Set status=##class(Ens.Rule.RuleDefinition).EvaluateRulesEx("PManager.RulesAndTransforms.Rules.FileValidation",,context,"Validate Data",.ruleReturn,.ruleReason,,process.RuleLogging)  Quit:$$$ISERR(status)
+ Set context.sc = ruleReturn
+ If (context.sc = $$$OK) {
+ Set ..%NextState="S3"
+ } else {
+ Set ..%NextState="S17"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S1") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S10">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S10") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S11">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call GetPerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse3","GetPerson",callrequest,"Call GetPerson Operation",1,0,"Call GetPerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call GetPerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call GetPerson Operation") Do ..%PendingResponses.SetAt("","Call GetPerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S13"
+ } else {
+    Set ..%NextState="S12",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S11") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S12">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S13"
+ } else {
+    Set ..%NextState="S12",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S12") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S13">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S13") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S14">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call UpdatePerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse4","UpdatePerson",callrequest,"Call UpdatePerson Operation",1,0,"Call UpdatePerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call UpdatePerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call UpdatePerson Operation") Do ..%PendingResponses.SetAt("","Call UpdatePerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S16"
+ } else {
+    Set ..%NextState="S15",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S14") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S15">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S16"
+ } else {
+    Set ..%NextState="S15",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S15") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S16">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S16") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S17">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do {
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)
+ } while (0)
+ If $$$ISERR(status) Quit
+ Set status=$$$OK,response.Response=context.scMessage
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S17") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S2">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do process.ClearAllPendingResponses()
+ Set ..%NextState="Stop"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S2") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S3">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If (context.ParsedMessage.Type="ADD") {
+ Set ..%NextState="S5"
+ } elseif (context.ParsedMessage.Type="DELETE") {
+ Set ..%NextState="S8"
+ } elseif (context.ParsedMessage.Type="GET") {
+ Set ..%NextState="S11"
+ } elseif (context.ParsedMessage.Type="UPDATE") {
+ Set ..%NextState="S14"
+ } else {
+ Set ..%NextState="S4"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S3") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S4">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S4") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S5">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call AddPerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse1","AddPerson",callrequest,"Call AddPerson Operation",1,0,"Call AddPerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call AddPerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call AddPerson Operation") Do ..%PendingResponses.SetAt("","Call AddPerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S7"
+ } else {
+    Set ..%NextState="S6",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S5") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S6">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S7"
+ } else {
+    Set ..%NextState="S6",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S6") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S7">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S7") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S8">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call DeletePerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse2","DeletePerson",callrequest,"Call DeletePerson Operation",1,0,"Call DeletePerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call DeletePerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call DeletePerson Operation") Do ..%PendingResponses.SetAt("","Call DeletePerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S10"
+ } else {
+    Set ..%NextState="S9",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S8") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S9">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S10"
+ } else {
+    Set ..%NextState="S9",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S9") Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.FILEProcess">
+<Description>
+Process which Validates message data and routs to the correct operation.</Description>
+<Super>Ens.BusinessProcessBPL</Super>
+<TimeChanged>65448,58538.198499</TimeChanged>
+<TimeCreated>65447,42567.387667</TimeCreated>
+
+<XData name="BPL">
+<Description>
+BPL Definition</Description>
+<XMLNamespace>http://www.intersystems.com/bpl</XMLNamespace>
+<Data><![CDATA[
+<process language='objectscript' request='PManager.Message.Request' response='PManager.Message.Response' height='2000' width='2825' >
+<context>
+<property name='ParsedMessage' type='PManager.Message.Request' instantiate='1' />
+<property name='sc' type='%Status' initialexpression='$$$OK' instantiate='0' />
+<property name='scMessage' type='%String' instantiate='0' >
+<parameters>
+<parameter name='MAXLEN'  value='50' />
+</parameters>
+</property>
+</context>
+<sequence xend='200' yend='1050' >
+<transform name='Transform RAW Message' class='PManager.RulesAndTransforms.Transform.PDATAtoRequest' source='request' target='context.ParsedMessage' xpos='200' ypos='250' >
+<annotation><![CDATA[Transform RAW message to Correct format]]]]><![CDATA[></annotation>
+</transform>
+<rule name='Validate Data' rule='PManager.RulesAndTransforms.Rules.FileValidation'  resultLocation='context.sc' ruleContext='context' xpos='200' ypos='350' >
+</rule>
+<if name='Data Valid' condition='context.sc = $$$OK' xpos='200' ypos='450' xend='200' yend='950' >
+<true>
+<switch name='Type?' xpos='470' ypos='600' xend='470' yend='850' >
+<annotation><![CDATA[Determine data flow and validations based on message request type]]]]><![CDATA[></annotation>
+<case condition='context.ParsedMessage.Type="ADD"' name='ADD' >
+<call name='Call AddPerson Operation' target='AddPerson' async='0' xpos='605' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</case>
+<case condition='context.ParsedMessage.Type="DELETE"' name='DELETE' >
+<call name='Call DeletePerson Operation' target='DeletePerson' async='0' xpos='875' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</case>
+<case condition='context.ParsedMessage.Type="GET"' name='GET' >
+<call name='Call GetPerson Operation' target='GetPerson' async='0' xpos='1145' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</case>
+<case condition='context.ParsedMessage.Type="UPDATE"' name='UPDATE' >
+<call name='Call UpdatePerson Operation' target='UpdatePerson' async='0' xpos='1415' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</case>
+<default/>
+</switch>
+</true>
+<false>
+<code name='Set scMessage' xpos='200' ypos='600' >
+<![CDATA[ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
+</code>
+<assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='200' ypos='700' />
+</false>
+</if>
+</sequence>
+</process>
+]]></Data>
+</XData>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.RESTProcess.Context">
+<Description>
+This class is generated by the PManager.Process.RESTProcess BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.RESTProcess</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Context</Super>
+<TimeChanged>65448,41204.831243</TimeChanged>
+<TimeCreated>65447,49023.813318</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Property name="ParsedMessage">
+<Type>PManager.Message.Request</Type>
+</Property>
+
+<Property name="sc">
+<Type>%Status</Type>
+<InitialExpression>$$$OK</InitialExpression>
+</Property>
+
+<Property name="scMessage">
+<Type>%String</Type>
+</Property>
+
+<Method name="%OnNew">
+<FormalSpec>initvalue</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	If '$IsObject(..ParsedMessageNewObject()) Quit %objlasterror
+	Quit ##super(initvalue)
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse1">
+<Description>
+Response Handler for call to AddPerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.RESTProcess.Thread1","OnResponse1")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse2">
+<Description>
+Response Handler for call to DeletePerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.RESTProcess.Thread1","OnResponse2")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse3">
+<Description>
+Response Handler for call to GetPerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.RESTProcess.Thread1","OnResponse3")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="OnResponse4">
+<Description>
+Response Handler for call to UpdatePerson</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.Request,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.RESTProcess.Thread1","OnResponse4")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>ContextDefaultData1</DefaultData>
+<Data name="ContextDefaultData1">
+<Structure>listnode</Structure>
+<Subscript>"Context"</Subscript>
+<Value name="1">
+<Value>ParsedMessage</Value>
+</Value>
+<Value name="2">
+<Value>sc</Value>
+</Value>
+<Value name="3">
+<Value>scMessage</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.RESTProcess.Thread1">
+<Description>
+This class is generated by the PManager.Process.RESTProcess BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.RESTProcess</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Thread</Super>
+<TimeChanged>65448,41205.512331</TimeChanged>
+<TimeCreated>65448,41204.800457</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Method name="S1">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set iscTemp=context.ParsedMessage
+ Set status=$classmethod("PManager.RulesAndTransforms.Transform.RawRestMessagtoFormattedMessage","Transform",request,.iscTemp,"")
+ If $$$ISERR(status) Quit
+ Set context.ParsedMessage=iscTemp
+ If (context.ParsedMessage.Type="ADD") {
+ Set ..%NextState="S3"
+ } elseif (context.ParsedMessage.Type="DELETE") {
+ Set ..%NextState="S9"
+ } elseif (context.ParsedMessage.Type="GET") {
+ Set ..%NextState="S15"
+ } elseif (context.ParsedMessage.Type="UPDATE") {
+ Set ..%NextState="S21"
+ } else {
+ Set ..%NextState="S2"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S1") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S10">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S10") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S11">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call DeletePerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse2","DeletePerson",callrequest,"Call DeletePerson Operation",1,0,"Call DeletePerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call DeletePerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call DeletePerson Operation") Do ..%PendingResponses.SetAt("","Call DeletePerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S13"
+ } else {
+    Set ..%NextState="S12",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S11") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S12">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S13"
+ } else {
+    Set ..%NextState="S12",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S12") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S13">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S10"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S13") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S14">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response.Response=context.scMessage
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S10"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S14") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S15">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do {
+ set context.sc = ##class(PManager.Utilities).ValidateID(context.ParsedMessage.IDNumber)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)
+ } while (0)
+ If $$$ISERR(status) Quit
+ If (context.sc=$$$OK) {
+ Set ..%NextState="S17"
+ } else {
+ Set ..%NextState="S20"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S15") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S16">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S16") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S17">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call GetPerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse3","GetPerson",callrequest,"Call GetPerson Operation",1,0,"Call GetPerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call GetPerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call GetPerson Operation") Do ..%PendingResponses.SetAt("","Call GetPerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S19"
+ } else {
+    Set ..%NextState="S18",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S17") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S18">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S19"
+ } else {
+    Set ..%NextState="S18",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S18") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S19">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S16"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S19") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S2">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do process.ClearAllPendingResponses()
+ Set ..%NextState="Stop"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S2") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S20">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response.Response=context.scMessage
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S16"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S20") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S21">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do {
+ set context.sc = ##class(PManager.Utilities).ValidateUpdatePerson(context.ParsedMessage)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)
+ } while (0)
+ If $$$ISERR(status) Quit
+ If (context.sc=$$$OK) {
+ Set ..%NextState="S23"
+ } else {
+ Set ..%NextState="S26"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S21") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S22">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S22") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S23">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call UpdatePerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse4","UpdatePerson",callrequest,"Call UpdatePerson Operation",1,0,"Call UpdatePerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call UpdatePerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call UpdatePerson Operation") Do ..%PendingResponses.SetAt("","Call UpdatePerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S25"
+ } else {
+    Set ..%NextState="S24",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S23") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S24">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S25"
+ } else {
+    Set ..%NextState="S24",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S24") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S25">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S22"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S25") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S26">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response.Response=context.scMessage
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S22"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S26") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S3">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do {
+ set context.sc = ##class(PManager.Utilities).ValidateNewPerson(context.ParsedMessage)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)
+ } while (0)
+ If $$$ISERR(status) Quit
+ If (context.sc=$$$OK) {
+ Set ..%NextState="S5"
+ } else {
+ Set ..%NextState="S8"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S3") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S4">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S4") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S5">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ #; --- Begin Call Call AddPerson Operation ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.Request).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.ParsedMessage
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse1","AddPerson",callrequest,"Call AddPerson Operation",1,0,"Call AddPerson Operation",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call AddPerson Operation ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call AddPerson Operation") Do ..%PendingResponses.SetAt("","Call AddPerson Operation")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S7"
+ } else {
+    Set ..%NextState="S6",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S5") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S6">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S7"
+ } else {
+    Set ..%NextState="S6",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S6") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S7">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S7") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S8">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response.Response=context.scMessage
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S4"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S8") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S9">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do {
+ set context.sc = ##class(PManager.Utilities).ValidateID(context.ParsedMessage.IDNumber)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)
+ } while (0)
+ If $$$ISERR(status) Quit
+ If (context.sc=$$$OK) {
+ Set ..%NextState="S11"
+ } else {
+ Set ..%NextState="S14"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S9") Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.RESTProcess">
+<Description>
+Process which Validates message data and routs to the correct operation.</Description>
+<Super>Ens.BusinessProcessBPL</Super>
+<TimeChanged>65448,41200.5888</TimeChanged>
+<TimeCreated>65447,42567.387667</TimeCreated>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+
+<XData name="BPL">
+<Description>
+BPL Definition</Description>
+<XMLNamespace>http://www.intersystems.com/bpl</XMLNamespace>
+<Data><![CDATA[
+<process language='objectscript' request='PManager.Message.Request' response='PManager.Message.Response' height='2000' width='2825' >
+<context>
+<property name='ParsedMessage' type='PManager.Message.Request' instantiate='1' />
+<property name='sc' type='%Status' initialexpression='$$$OK' instantiate='0' />
+<property name='scMessage' type='%String' instantiate='0' />
+</context>
+<sequence xend='200' yend='1050' >
+<transform name='Transform RAW Message' class='PManager.RulesAndTransforms.Transform.RawRestMessagtoFormattedMessage' source='request' target='context.ParsedMessage' xpos='200' ypos='250' >
+<annotation><![CDATA[Transform RAW message to Correct format]]]]><![CDATA[></annotation>
+</transform>
+<switch name='Type?' xpos='200' ypos='350' xend='200' yend='950' >
+<annotation><![CDATA[Determine data flow and validations based on message request type]]]]><![CDATA[></annotation>
+<case condition='context.ParsedMessage.Type="ADD"' name='ADD' >
+<code name='Validate Data' xpos='335' ypos='500' >
+<annotation><![CDATA[calls Pmanager.Utilities.ValidateNewPerson]]]]><![CDATA[></annotation>
+<![CDATA[ set context.sc = ##class(PManager.Utilities).ValidateNewPerson(context.ParsedMessage)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
+</code>
+<if name='Data Valid?' condition='context.sc=$$$OK' xpos='335' ypos='600' xend='335' yend='850' >
+<annotation><![CDATA[if context.sc = $$$OK]]]]><![CDATA[></annotation>
+<true>
+<call name='Call AddPerson Operation' target='AddPerson' async='0' xpos='605' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</true>
+<false>
+<assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='335' ypos='750' />
+</false>
+</if>
+</case>
+<case condition='context.ParsedMessage.Type="DELETE"' name='DELETE' >
+<code name='Validate Data' xpos='875' ypos='500' >
+<annotation><![CDATA[calls Pmanager.Utilities.ValidateID]]]]><![CDATA[></annotation>
+<![CDATA[ set context.sc = ##class(PManager.Utilities).ValidateID(context.ParsedMessage.IDNumber)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
+</code>
+<if name='Data Valid?' condition='context.sc=$$$OK' xpos='875' ypos='600' xend='875' yend='850' >
+<annotation><![CDATA[if context.sc = $$$OK]]]]><![CDATA[></annotation>
+<true>
+<call name='Call DeletePerson Operation' target='DeletePerson' async='0' xpos='1145' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</true>
+<false>
+<assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='875' ypos='750' />
+</false>
+</if>
+</case>
+<case condition='context.ParsedMessage.Type="GET"' name='GET' >
+<code name='Validate Data' xpos='1415' ypos='500' >
+<annotation><![CDATA[calls Pmanager.Utilities.ValidateID]]]]><![CDATA[></annotation>
+<![CDATA[ set context.sc = ##class(PManager.Utilities).ValidateID(context.ParsedMessage.IDNumber)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
+</code>
+<if name='Data Valid?' condition='context.sc=$$$OK' xpos='1415' ypos='600' xend='1415' yend='850' >
+<annotation><![CDATA[if context.sc = $$$OK]]]]><![CDATA[></annotation>
+<true>
+<call name='Call GetPerson Operation' target='GetPerson' async='0' xpos='1685' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</true>
+<false>
+<assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='1415' ypos='750' />
+</false>
+</if>
+</case>
+<case condition='context.ParsedMessage.Type="UPDATE"' name='UPDATE' >
+<code name='Validate Data' xpos='1955' ypos='500' >
+<![CDATA[ set context.sc = ##class(PManager.Utilities).ValidateUpdatePerson(context.ParsedMessage)
+ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
+</code>
+<if name='Data Valid' condition='context.sc=$$$OK' xpos='1955' ypos='600' xend='1955' yend='850' >
+<true>
+<call name='Call UpdatePerson Operation' target='UpdatePerson' async='0' xpos='2225' ypos='750' >
+<request type='PManager.Message.Request' >
+<assign property="callrequest" value="context.ParsedMessage" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</true>
+<false>
+<assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='1955' ypos='750' />
+</false>
+</if>
+</case>
+<default/>
+</switch>
+</sequence>
+</process>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Process.test.Context">
+<Description>
+This class is generated by the PManager.Process.test BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.test</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Context</Super>
+<TimeChanged>65448,58164.602279</TimeChanged>
+<TimeCreated>65448,55549.897807</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Property name="Key">
+<Type>%Integer</Type>
+<InitialExpression>1</InitialExpression>
+</Property>
+
+<Property name="tPDATA">
+<Type>PManager.RecordMaps.Person.PDATA.PDATARecord</Type>
+</Property>
+
+<Method name="OnResponse1">
+<Description>
+Response Handler for call to FILEProcess</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.RecordMaps.Person.CRM.PersonCRM.Batch,response:PManager.Message.Response,callrequest:PManager.RecordMaps.Person.PDATA.PDATARecord,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response=callresponse
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.test.Thread1","OnResponse1")
+ Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>ContextDefaultData1</DefaultData>
+<Data name="ContextDefaultData1">
+<Structure>listnode</Structure>
+<Subscript>"Context"</Subscript>
+<Value name="1">
+<Value>Key</Value>
+</Value>
+<Value name="2">
+<Value>ParsedMessage</Value>
+</Value>
+<Value name="3">
+<Value>tPDATA</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.test.Thread1">
+<Description>
+This class is generated by the PManager.Process.test BPL class.
+This class should not be edited or modified in any way.
+Do not make direct use of this class in your application.</Description>
+<ClassType>persistent</ClassType>
+<CompileAfter>PManager.Process.test</CompileAfter>
+<IncludeCode/>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>Ens.BP.Thread</Super>
+<TimeChanged>65448,58165.288029</TimeChanged>
+<TimeCreated>65448,58164.581348</TimeCreated>
+<GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Method name="S1">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set context.Key="",..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S1") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S2">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set context.Key=request.PDATA.Next(context.Key)
+ If context.Key="" {
+  Set ..%NextState="S4"
+ } else {
+  Set ..%NextState="S3"
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S2") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S3">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,context.tPDATA=request.PDATA.GetAt(context.Key)
+ If $$$ISERR(status) Quit
+ #; --- Begin Call FILE Process ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.RecordMaps.Person.PDATA.PDATARecord).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=$$$OK,callrequest=context.tPDATA
+ If $$$ISERR(status) Quit
+ Set status=..MakeAsyncCall("OnResponse1","FILEProcess",callrequest,"FILE Process",1,0,"FILE Process",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call FILE Process ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("FILE Process") Do ..%PendingResponses.SetAt("","FILE Process")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S6"
+ } else {
+    Set ..%NextState="S5",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S3") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S4">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do process.ClearAllPendingResponses()
+ Set ..%NextState="Stop"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S4") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S5">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S6"
+ } else {
+    Set ..%NextState="S5",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S5") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S6">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S6") Goto Exit
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="PManager.Process.test">
+<Description>
+</Description>
+<Super>Ens.BusinessProcessBPL</Super>
+<TimeChanged>65448,58162.343696</TimeChanged>
+<TimeCreated>65448,52534.20478</TimeCreated>
+
+<XData name="BPL">
+<Description>
+BPL Definition</Description>
+<XMLNamespace>http://www.intersystems.com/bpl</XMLNamespace>
+<Data><![CDATA[
+<process language='objectscript' request='PManager.RecordMaps.Person.CRM.PersonCRM.Batch' response='PManager.Message.Response' height='2000' width='2000' >
+<context>
+<property name='Key' type='%Integer' initialexpression='1' instantiate='0' />
+<property name='tPDATA' type='PManager.RecordMaps.Person.PDATA.PDATARecord' instantiate='0' />
+</context>
+<sequence xend='200' yend='350' >
+<foreach property='request.PDATA' key='context.Key' xpos='200' ypos='250' xend='199' yend='603' >
+<assign name="Set tPDATA" property="context.tPDATA" value="request.PDATA.GetAt(context.Key)" action="set" xpos='200' ypos='250' />
+<call name='FILE Process' target='FILEProcess' async='0' xpos='200' ypos='350' >
+<request type='PManager.RecordMaps.Person.PDATA.PDATARecord' >
+<assign property="callrequest" value="context.tPDATA" action="set" />
+</request>
+<response type='PManager.Message.Response' >
+<assign property="response" value="callresponse" action="set" />
+</response>
+</call>
+</foreach>
+</sequence>
+</process>
+]]></Data>
+</XData>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.CRM.PersonCRM.Batch">
+<Description>
+RECORDMAP: Modified during compilation of Complex RecordMap 'PManager.RecordMaps.Person.CRM.PersonCRM'
+on 2020-03-10 at 14:02:36.778 [2020-03-10 12:02:36.778 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>EnsLib.RecordMap.ComplexBatch,Ens.Request</Super>
+<TimeChanged>65448,50556.845276</TimeChanged>
+<TimeCreated>65448,50556.778373</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Property name="PHEAD">
+<Type>PManager.RecordMaps.Person.PHEAD.PHEADRecord</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="PDATA">
+<Type>PManager.RecordMaps.Person.PDATA.PDATARecord</Type>
+<Collection>array</Collection>
+</Property>
+
+<Property name="PTAIL">
+<Type>PManager.RecordMaps.Person.PTAIL.PTAILRecord</Type>
+<Required>1</Required>
+</Property>
+
+<Method name="%OnClose">
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Try {
+		Set tId = ..%Id()
+		If ""=tId {
+			Set seqKey = ""
+			For {
+				Set tElement = ..PDATA.GetNext(.seqKey)
+				If (seqKey = "") Quit
+				If $IsObject(tElement) && (""'=tElement.%Id()) {
+					Set tElementId = tElement.%Id()
+					Set tStatus = ##class(PManager.RecordMaps.Person.PDATA.PDATARecord).%DeleteId(tElementId)
+				}
+				If $$$ISERR(tStatus) Quit
+			}
+		}
+	} Catch ex {
+		Set tStatus = $$$SystemError
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.RecordMaps4291.BatchD</DataLocation>
+<DefaultData>BatchDefaultData</DefaultData>
+<IdLocation>^PManager.RecordMaps4291.BatchD</IdLocation>
+<IndexLocation>^PManager.RecordMaps4291.BatchI</IndexLocation>
+<StreamLocation>^PManager.RecordMaps4291.BatchS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="BatchDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>PHEAD</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>PTAIL</Value>
+</Value>
+</Data>
+<Data name="PDATA">
+<Attribute>PDATA</Attribute>
+<Structure>subnode</Structure>
+<Subscript>"PDATA"</Subscript>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.CRM.PersonCRM">
+<Description>
+</Description>
+<Super>EnsLib.RecordMap.ComplexMap</Super>
+<TimeChanged>65448,50556.79178</TimeChanged>
+<TimeCreated>65448,50539.533771</TimeCreated>
+
+<Parameter name="BATCHCLASS">
+<Default>PManager.RecordMaps.Person.CRM.PersonCRM.Batch</Default>
+</Parameter>
+
+<Method name="PutBatch">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pIOStream:%IO.DeviceStream,pBatch:EnsLib.RecordMap.ComplexBatch</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Try {
+		If '$IsObject($get(pBatch)) Set tStatus = $$$ERROR($$$ObjectInstanceRequired) Quit
+		If '$IsObject(pIOStream) {
+			Set tFilename = pIOStream
+			Set pIOStream = ##class(%IO.FileStream).%New()
+			Do pIOStream.Open(tFilename,"WAE",,"UTF-8",.tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tStatus = ##class(PManager.RecordMaps.Person.PHEAD.PHEAD).PutObject(pIOStream,pBatch.PHEAD,0)
+		If $$$ISERR(tStatus) Quit
+		Set seqKey = ""
+		For {
+			Set tElement = pBatch.PDATA.GetNext(.seqKey)
+			If (seqKey = "") Quit
+			If $IsObject(tElement) {
+				Set tStatus = ##class(PManager.RecordMaps.Person.PDATA.PDATA).PutObject(pIOStream,tElement,0)
+				If $$$ISERR(tStatus) Quit
+			}
+			Set tStatus = pBatch.PDATA.%UnSwizzleAt(seqKey)
+			If $$$ISERR(tStatus) Quit
+		}
+		If $$$ISERR(tStatus) Quit
+		Set tStatus = ##class(PManager.RecordMaps.Person.PTAIL.PTAIL).PutObject(pIOStream,pBatch.PTAIL,1)
+		If $$$ISERR(tStatus) Quit
+	} Catch ex {
+		Set tStatus = $$$SystemError
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetBatch">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pIOStream:%IO.DeviceStream,pTimeout:%Numeric=-1,*pBatch:EnsLib.RecordMap.ComplexBatch,&pLookAhead:%String=""]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Try {
+		If '$IsObject(pIOStream) {
+			Set tFilename = pIOStream
+			Set pIOStream = ##class(%IO.FileStream).%New()
+			Do pIOStream.Open(tFilename,,pTimeout,"UTF-8",.tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set pIOStream.CharEncoding = "UTF-8"
+		Set pBatch = ##class(PManager.RecordMaps.Person.CRM.PersonCRM.Batch).%New()
+		Set pBatch.%Source = pIOStream.Name
+		Set pLookAhead = $get(pLookAhead)
+		Set tStatus = ##class(PManager.RecordMaps.Person.PHEAD.PHEAD).GetObject(pIOStream,.tHeader,pTimeout,.pLookAhead)
+		If $$$ISERR(tStatus) Set tStatus = $system.Status.AppendStatus($$$ERROR($$$EnsRecordMapErrComplexBasic,"PHEAD","PManager.RecordMaps.Person.PHEAD.PHEAD",$classname()),tStatus) Quit
+		Set pBatch.PHEAD = tHeader
+		If (6 > $length(pLookAhead)) {
+			Set pLookAhead = pLookAhead _ pIOStream.Read(6-$length(pLookAhead),pTimeout,.tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tCount = 0
+		While ($extract(pLookAhead,1,6) = "PDATA,") {
+			Set tStatus = ##class(PManager.RecordMaps.Person.PDATA.PDATA).GetObject(pIOStream,.tObject,pTimeout,.pLookAhead)
+			Set tCount = tCount + 1
+			If $$$ISERR(tStatus) Quit
+			Set tStatus = tObject.%Save()
+			If $$$ISERR(tStatus) Quit
+			Set tStatus = pBatch.PDATA.SetAt(tObject,tCount)
+			If $$$ISERR(tStatus) Quit
+			Set tStatus = pBatch.PDATA.%UnSwizzleAt(tCount)
+			If $$$ISERR(tStatus) Quit
+			If (6 > $length(pLookAhead)) {
+				Set pLookAhead = pLookAhead _ pIOStream.Read(6-$length(pLookAhead),pTimeout,.tStatus)
+				If $$$ISERR(tStatus) Quit
+			}
+		}
+		If $$$ISERR(tStatus) Set tStatus = $system.Status.AppendStatus($$$ERROR($$$EnsRecordMapErrComplexRepeating,"PDATA","PManager.RecordMaps.Person.PDATA.PDATA",$classname(),tCount),tStatus) Quit
+		Set tStatus = ##class(PManager.RecordMaps.Person.PTAIL.PTAIL).GetObject(pIOStream,.tTrailer,pTimeout,.pLookAhead)
+		If $$$ISERR(tStatus) Set tStatus = $system.Status.AppendStatus($$$ERROR($$$EnsRecordMapErrComplexBasic,"PTAIL","PManager.RecordMaps.Person.PTAIL.PTAIL",$classname()),tStatus) Quit
+		Set pBatch.PTAIL = tTrailer
+	} Catch {
+		Set tStatus = $$$SystemError
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<XData name="ComplexBatch">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<ComplexBatch xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="PManager.RecordMaps.Person.CRM.PersonCRM" char_encoding="UTF-8" targetClassname="PManager.RecordMaps.Person.CRM.PersonCRM.Batch">
+  <Header name="PHEAD" recordMap="PManager.RecordMaps.Person.PHEAD.PHEAD">
+  </Header>
+  <RecordReference name="PDATA" required="0" repeating="1" recordMap="PManager.RecordMaps.Person.PDATA.PDATA">
+  </RecordReference>
+  <Trailer name="PTAIL" recordMap="PManager.RecordMaps.Person.PTAIL.PTAIL">
+  </Trailer>
+</ComplexBatch>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PDATA.PDATA">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'PManager.RecordMaps.Person.PDATA.PDATA'
+on 2020-03-10 at 13:59:14.095 [2020-03-10 11:59:14.095 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65448,50354.096558</TimeChanged>
+<TimeCreated>65448,49632.136377</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>PManager.RecordMaps.Person.PDATA.PDATARecord</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "PDATA," } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(13,10), tRecLabel, .pLookAhead, "")
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Type = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.FirstName = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.LastName = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.IDNumber = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ContactNumber = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Gender =  pObject.GenderDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Member =  pObject.MemberDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.DateOfBirth =  pObject.DateOfBirthDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Dependants =  pObject.DependantsDisplayToLogical(tCurrString)
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write("PDATA,",,.tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Do pStream.Write($select(pHasTopFields: pObject.Type,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.FirstName,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.LastName,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.IDNumber,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.ContactNumber,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.GenderLogicalToDisplay(pObject.Gender),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.MemberLogicalToDisplay(pObject.Member),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.DateOfBirthLogicalToDisplay(pObject.DateOfBirth),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.DependantsLogicalToDisplay(pObject.Dependants),1: ""),0)
+	Do pStream.Write($char(13,10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("PManager.RecordMaps.Person.PDATA.PDATARecord")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA["PDATA,"
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="PManager.RecordMaps.Person.PDATA.PDATA" type="delimited" char_encoding="UTF-8" targetClassname="PManager.RecordMaps.Person.PDATA.PDATARecord" complexBatchManaged="1" label="PDATA," padFromLeft="0" recordTerminator="\x0d\x0a" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="Type" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="FirstName" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="LastName" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="IDNumber" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ContactNumber" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Gender" required="0" ignored="0" datatype="%EnumString" params="DISPLAYLIST = &quot;,Male,Female&quot;, VALUELIST = &quot;,1,2&quot;" repeating="0">
+  </Field>
+  <Field name="Member" required="0" ignored="0" datatype="%Boolean" repeating="0">
+  </Field>
+  <Field name="DateOfBirth" required="0" ignored="0" datatype="%Date" repeating="0">
+  </Field>
+  <Field name="Dependants" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PDATA.PDATARecord">
+<Description>
+RECORDMAP: Generated from RecordMap 'PManager.RecordMaps.Person.PDATA.PDATA'
+on 2020-03-10 at 13:59:14.083 [2020-03-10 11:59:14.083 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>EnsLib.RecordMap.ComplexChild,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65448,50370.712495</TimeChanged>
+<TimeCreated>65448,50354.08396</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="Type">
+<Type>%String</Type>
+</Property>
+
+<Property name="FirstName">
+<Type>%String</Type>
+</Property>
+
+<Property name="LastName">
+<Type>%String</Type>
+</Property>
+
+<Property name="IDNumber">
+<Type>%String</Type>
+</Property>
+
+<Property name="ContactNumber">
+<Type>%String</Type>
+</Property>
+
+<Property name="Gender">
+<Type>%EnumString</Type>
+<Parameter name="DISPLAYLIST" value=",Male,Female"/>
+<Parameter name="VALUELIST" value=",1,2"/>
+</Property>
+
+<Property name="Member">
+<Type>%Boolean</Type>
+</Property>
+
+<Property name="DateOfBirth">
+<Type>%Date</Type>
+</Property>
+
+<Property name="Dependants">
+<Type>%Integer</Type>
+</Property>
+
+<Trigger name="OnDelete">
+<Code>	Set %ok = ##class(PManager.RecordMaps.Person.PDATA.PDATARecord).%OnDelete($$$oidForm({ID})) If $$$ISERR(%ok) Quit</Code>
+<Event>DELETE</Event>
+</Trigger>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.Recor937B.PDATARecordD</DataLocation>
+<DefaultData>PDATARecordDefaultData</DefaultData>
+<IdLocation>^PManager.Recor937B.PDATARecordD</IdLocation>
+<IndexLocation>^PManager.Recor937B.PDATARecordI</IndexLocation>
+<StreamLocation>^PManager.Recor937B.PDATARecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="PDATARecordDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>NewField1</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>NewField3</Value>
+</Value>
+<Value name="5">
+<Value>NewField4</Value>
+</Value>
+<Value name="6">
+<Value>NewField5</Value>
+</Value>
+<Value name="7">
+<Value>NewField6</Value>
+</Value>
+<Value name="8">
+<Value>NewField7</Value>
+</Value>
+<Value name="9">
+<Value>NewField8</Value>
+</Value>
+<Value name="10">
+<Value>NewField9</Value>
+</Value>
+<Value name="11">
+<Value>NewField2</Value>
+</Value>
+<Value name="12">
+<Value>Type</Value>
+</Value>
+<Value name="13">
+<Value>FirstName</Value>
+</Value>
+<Value name="14">
+<Value>LastName</Value>
+</Value>
+<Value name="15">
+<Value>IDNumber</Value>
+</Value>
+<Value name="16">
+<Value>ContactNumber</Value>
+</Value>
+<Value name="17">
+<Value>Gender</Value>
+</Value>
+<Value name="18">
+<Value>Member</Value>
+</Value>
+<Value name="19">
+<Value>DateOfBirth</Value>
+</Value>
+<Value name="20">
+<Value>Dependants</Value>
+</Value>
+</Data>
+</Storage>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PHEAD.PHEAD">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'PManager.RecordMaps.Person.PHEAD.PHEAD'
+on 2020-03-10 at 13:59:00.589 [2020-03-10 11:59:00.589 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65448,50340.589902</TimeChanged>
+<TimeCreated>65448,50186.444158</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>PManager.RecordMaps.Person.PHEAD.PHEADRecord</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "PHEAD," } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(13,10), tRecLabel, .pLookAhead, "")
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.CompanyName = tCurrString
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write("PHEAD,",,.tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Do pStream.Write($select(pHasTopFields: pObject.CompanyName,1: ""),0)
+	Do pStream.Write($char(13,10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("PManager.RecordMaps.Person.PHEAD.PHEADRecord")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA["PHEAD,"
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="PManager.RecordMaps.Person.PHEAD.PHEAD" type="delimited" char_encoding="UTF-8" targetClassname="PManager.RecordMaps.Person.PHEAD.PHEADRecord" complexBatchManaged="1" label="PHEAD," padFromLeft="0" recordTerminator="\x0d\x0a" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="CompanyName" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PHEAD.PHEADRecord">
+<Description>
+RECORDMAP: Generated from RecordMap 'PManager.RecordMaps.Person.PHEAD.PHEAD'
+on 2020-03-10 at 13:59:00.581 [2020-03-10 11:59:00.581 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>EnsLib.RecordMap.ComplexChild,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65448,50340.584092</TimeChanged>
+<TimeCreated>65448,50340.581888</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="CompanyName">
+<Type>%String</Type>
+</Property>
+
+<Trigger name="OnDelete">
+<Code>	Set %ok = ##class(PManager.RecordMaps.Person.PHEAD.PHEADRecord).%OnDelete($$$oidForm({ID})) If $$$ISERR(%ok) Quit
+</Code>
+<Event>DELETE</Event>
+</Trigger>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.Recor91F7.PHEADRecordD</DataLocation>
+<DefaultData>PHEADRecordDefaultData</DefaultData>
+<IdLocation>^PManager.Recor91F7.PHEADRecordD</IdLocation>
+<IndexLocation>^PManager.Recor91F7.PHEADRecordI</IndexLocation>
+<StreamLocation>^PManager.Recor91F7.PHEADRecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="PHEADRecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>CompanyName</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PTAIL.PTAIL">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'PManager.RecordMaps.Person.PTAIL.PTAIL'
+on 2020-03-10 at 13:58:42.553 [2020-03-10 11:58:42.553 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65448,50322.554924</TimeChanged>
+<TimeCreated>65448,50290.834903</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>PManager.RecordMaps.Person.PTAIL.PTAILRecord</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "PTAIL," } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(13,10), tRecLabel, .pLookAhead, "")
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Records =  pObject.RecordsDisplayToLogical(tCurrString)
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write("PTAIL,",,.tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Do pStream.Write($select(pHasTopFields: pObject.RecordsLogicalToDisplay(pObject.Records),1: ""),0)
+	Do pStream.Write($char(13,10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("PManager.RecordMaps.Person.PTAIL.PTAILRecord")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA["PTAIL,"
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="PManager.RecordMaps.Person.PTAIL.PTAIL" type="delimited" char_encoding="UTF-8" targetClassname="PManager.RecordMaps.Person.PTAIL.PTAILRecord" complexBatchManaged="1" label="PTAIL," padFromLeft="0" recordTerminator="\x0d\x0a" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="Records" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RecordMaps.Person.PTAIL.PTAILRecord">
+<Description>
+RECORDMAP: Generated from RecordMap 'PManager.RecordMaps.Person.PTAIL.PTAIL'
+on 2020-03-10 at 13:58:42.545 [2020-03-10 11:58:42.545 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>EnsLib.RecordMap.ComplexChild,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65448,50322.547316</TimeChanged>
+<TimeCreated>65448,50322.545601</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="Records">
+<Type>%Integer</Type>
+</Property>
+
+<Trigger name="OnDelete">
+<Code>	Set %ok = ##class(PManager.RecordMaps.Person.PTAIL.PTAILRecord).%OnDelete($$$oidForm({ID})) If $$$ISERR(%ok) Quit
+</Code>
+<Event>DELETE</Event>
+</Trigger>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.RecorC6B7.PTAILRecordD</DataLocation>
+<DefaultData>PTAILRecordDefaultData</DefaultData>
+<IdLocation>^PManager.RecorC6B7.PTAILRecordD</IdLocation>
+<IndexLocation>^PManager.RecorC6B7.PTAILRecordI</IndexLocation>
+<StreamLocation>^PManager.RecorC6B7.PTAILRecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="PTAILRecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Records</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="PManager.RulesAndTransforms.Rules.FileValidation">
+<Description>
+</Description>
+<Super>Ens.Rule.Definition</Super>
+<TimeChanged>65448,42782.76212</TimeChanged>
+<TimeCreated>65448,41709.289294</TimeCreated>
+
+<Parameter name="RuleAssistClass">
+<Default>Ens.Rule.GeneralBusinessRuleAssist</Default>
+</Parameter>
+
+<XData name="RuleDefinition">
+<XMLNamespace>http://www.intersystems.com/rule</XMLNamespace>
+<Data><![CDATA[
+<ruleDefinition alias="" context="PManager.Process.FILEProcess.Context" production="">
+<variable name="sc"></variable>
+<ruleSet name="ValidateData" effectiveBegin="2020-03-09" effectiveEnd="">
+<rule name="ADD" disabled="false">
+<when condition="ParsedMessage.Type=&quot;ADD&quot;">
+<assign property="@sc" value="ValidateNewPersonFromFile(ParsedMessage)"></assign>
+<return>@sc</return>
+</when>
+</rule>
+<rule name="GET" disabled="false">
+<when condition="ParsedMessage.Type=&quot;GET&quot;">
+<assign property="@sc" value="ValidateID(ParsedMessage.IDNumber)"></assign>
+<return>@sc</return>
+</when>
+</rule>
+<rule name="UPDATE" disabled="false">
+<when condition="ParsedMessage.Type=&quot;UPDATE&quot;">
+<assign property="@sc" value="ValidateUpdatePerson(ParsedMessage)"></assign>
+<return>@sc</return>
+</when>
+</rule>
+<rule name="DELETE" disabled="false">
+<when condition="ParsedMessage.Type=&quot;DELETE&quot;">
+<assign property="@sc" value="ValidateID(ParsedMessage.IDNumber)"></assign>
+<return>@sc</return>
+</when>
+</rule>
+</ruleSet>
+</ruleDefinition>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RulesAndTransforms.Transform.PDATAtoRequest">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65448,56870.921612</TimeChanged>
+<TimeCreated>65448,51237.821058</TimeCreated>
+<DependsOn>PManager.RecordMaps.Person.PDATA.PDATARecord,PManager.Message.Request</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='PManager.RecordMaps.Person.PDATA.PDATARecord' targetClass='PManager.Message.Request' create='new' language='objectscript' >
+<assign value='source.Type' property='target.Type' action='set' />
+<assign value='source.FirstName' property='target.FirstName' action='set' />
+<assign value='source.LastName' property='target.LastName' action='set' />
+<assign value='source.IDNumber' property='target.IDNumber' action='set' />
+<assign value='source.ContactNumber' property='target.ContactNumber' action='set' />
+<assign value='source.Gender' property='target.Gender' action='set' />
+<assign value='source.Member' property='target.Member' action='set' />
+<assign value='source.DateOfBirth' property='target.DateOfBirth' action='set' />
+<assign value='source.Dependants' property='target.Dependants' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.RulesAndTransforms.Transform.RawRestMessagtoFormattedMessage">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65448,41099.177104</TimeChanged>
+<TimeCreated>65447,43142.287701</TimeCreated>
+<DependsOn>PManager.Message.Request</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='PManager.Message.Request' targetClass='PManager.Message.Request' create='new' language='objectscript' >
+<annotation>Basic Formatting on message data</annotation>
+<assign value='source.Type' property='target.Type' action='set' />
+<assign value='..ToUpper(source.FirstName)' property='target.FirstName' action='set' />
+<assign value='..ToUpper(source.LastName)' property='target.LastName' action='set' />
+<assign value='..Strip(source.IDNumber,"*WA")' property='target.IDNumber' action='set' />
+<assign value='..Strip(source.ContactNumber,"*WA")' property='target.ContactNumber' action='set' />
+<assign value='source.Gender' property='target.Gender' action='set' />
+<assign value='source.Member' property='target.Member' action='set' />
+<assign value='source.DateOfBirth' property='target.DateOfBirth' action='set' />
+<assign value='source.Dependants' property='target.Dependants' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="PManager.Service.RESTService">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font>
+<hr>
+<font size="2">Transforms <class>%DynamicObject</class> received by REST API into <class>PManager.Message.AddPersonRequest</class>...<br>
+and routes it to<class>Pmanager.Process.ValidateAddPerson</class></font>]]></Description>
+<Language>objectscript</Language>
+<Super>Ens.BusinessService</Super>
+<TimeChanged>65447,58650.441132</TimeChanged>
+<TimeCreated>65447,40829.689194</TimeCreated>
+
+<Parameter name="ADAPTER">
+<Default>EnsLib.HTTP.InboundAdapter</Default>
+</Parameter>
+
+<Method name="OnProcessInput">
+<FormalSpec>pInput:%Stream,*pOutput:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		//making a blank req message
+		set Request = ##class(PManager.Message.Request).%New()
+		//Set All message fields
+		set Request.Type = pInput.Type
+		set Request.FirstName = pInput.FirstName
+		set Request.LastName = pInput.LastName
+		set Request.IDNumber = pInput.IDNumber
+		set Request.ContactNumber = pInput.ContactNumber
+		if pInput.Gender = "Male" {set Request.Gender = 1} else {set Request.Gender = 2}
+		set Request.Member = pInput.Member
+		if pInput.DateOfBirth{ set Request.DateOfBirth = $ZDateh(pInput.DateOfBirth,15)}
+		set Request.Dependants = pInput.Dependants
+		//Send it onto the Process
+		$$$ThrowOnError(..SendRequestSync("CRUDProcess", Request, .pOutput))
+		
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="PManager.Utilities">
+<Description><![CDATA[
+<font color="green", size="1"><i>
+Written by R.Hutchinson</br>
+(+27)72 606 0326</br>
+<a href="mailto:rhutchin@student.wethingcode.co.za">rhutchin@student.wethinkcode.co.za</a></i></br>
+	<a href="https://www.linkedin.com/in/ryan-hutchinson-za/">LinkedIn</a> - <a href="https://github.com/RyanHutchinson">GitHub</a></br></font> 
+	<hr>
+	</br>
+	Collection of <class>PManager.Person</class> Validation methods]]></Description>
+<Super>Ens.Rule.FunctionSet</Super>
+<TimeChanged>65448,58886.245045</TimeChanged>
+<TimeCreated>65436,47509.769007</TimeCreated>
+
+<UDLText name="T">
+<Content><![CDATA[
+// Class PManager.Utilities Extends %RegisteredObject
+
+]]></Content>
+</UDLText>
+
+<UDLText name="T">
+<Content><![CDATA[
+// {
+
+]]></Content>
+</UDLText>
+
+<Method name="ValidateID">
+<Description><![CDATA[
+<FONT size="2">Validates a RSA ID Number using the <a href="https://en.wikipedia.org/wiki/Luhn_algorithm">Luhn Algorithm</a></br>
+Returns $$$OK if is valid</br>
+else returns 5001 "Not a valid ID Number" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pIDNumber:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		if $Length(pIDNumber) < 13 { //Check length 1
+			set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")
+		} elseif $Extract(pIDNumber,3,4) > 12 { //Check Valid Month Digits
+			set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")
+		} elseif $Extract(pIDNumber,5,6) > 31 { //Check Valid Day Digits
+			set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")
+		}
+		//Check Citizen Status Digit
+		elseif $Extract(pIDNumber,11) > 1 {set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")}
+		//Check Minor Checksum Digit
+		elseif $Extract(pIDNumber,12) '= 8 {set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")}
+		//Check Major Checksum Digit
+		else {
+				//Add all Odd Digits besides for the 13th(the Checksum)
+				set a = $extract(pIDNumber,1) + $extract(pIDNumber,3) + $extract(pIDNumber,5) + $extract(pIDNumber,7) + $extract(pIDNumber,9) + $extract(pIDNumber,11)
+				//Move Odd digits into a field and * 2
+				set b = ($extract(pIDNumber,2)_$extract(pIDNumber,4)_$extract(pIDNumber,6)_$extract(pIDNumber,8)_$extract(pIDNumber,10)_$extract(pIDNumber,12)) * 2
+				//Add all the fields digits
+				set b = $extract(b,1) + $extract(b,2) + $extract(b,3) + $extract(b,4) + $extract(b,5) + $extract(b,6) + $extract(b, 7)
+				//Add the two results and minus the second digit of the result by 10
+				set tChecksum = 10 - $extract((a + b),2)
+				//if the two Checksums do not match... not a valid ID Number
+				if $extract(tChecksum,1) '= $extract(pIDNumber,13){set sc = $$$ERROR($$$GeneralError,"Not a valid ID Number")}
+		}
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateContactNumber">
+<Description><![CDATA[
+<FONT size="2">Validates a RSA Cellphone Number</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "Not a valid Cellphone Number" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pContactNumber:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	if $Length(pContactNumber) '= 10 { //Check length
+		set sc = $$$ERROR($$$GeneralError,"Not a valid Cellphone Number")
+	} elseif $Extract(pContactNumber, 1) '= 0 { // Check prefix digit
+		set sc = $$$ERROR($$$GeneralError,"Not a valid Cellphone Number")
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateDateOfBirth">
+<Description><![CDATA[
+<FONT size="2">Validates a Date of birth(Not future, matches ID Doc)</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "Not a valid Date" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDateOfBirth:%Date,pIDNumber:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	if pDateOfBirth > $SYSTEM.SYS.Horolog() { //Check that DOB is not in future
+		set sc = $$$ERROR($$$GeneralError,"Not a valid Date")
+	} elseif $Extract($ZDate(pDateOfBirth,8),3,8) '= $Extract(pIDNumber,1,6) { //Check that DOB and IDdob match
+		set sc = $$$ERROR($$$GeneralError,"ID / DoB Mismatch")
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateGender">
+<Description><![CDATA[
+<FONT size="2">Validates Gender. Input vs ID Number</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "ID / Gender mismatch" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pGender:%EnumString,pIDNumber:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set Gender = ""
+	
+	if $Extract(pIDNumber,7) < 5 {set Gender = 2} else {set Gender = 1}
+	if pGender '= Gender {set sc = $$$ERROR($$$GeneralError,"ID / Gender mismatch")}
+	
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateNewPerson">
+<Description><![CDATA[
+<FONT size="2">Validates a AddPersonRequest Message</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pPerson:PManager.Message.Request</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		$$$ThrowOnError(..ValidateContactNumber(pPerson.ContactNumber))
+		$$$ThrowOnError(..ValidateID(pPerson.IDNumber))
+		$$$ThrowOnError(..ValidateGender(pPerson.Gender, pPerson.IDNumber))
+		$$$ThrowOnError(..ValidateDateOfBirth(pPerson.DateOfBirth, pPerson.IDNumber))
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateNewPersonFromFile">
+<Description><![CDATA[
+<FONT size="2">Validates a Request Message from FILEService</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pPerson:PManager.Message.Request</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		set scCombo = ""
+		set sc1 = ..ValidateContactNumber(pPerson.ContactNumber)
+		if sc1 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc1)_", "}
+		set sc2 = ..ValidateID(pPerson.IDNumber)
+		if sc2 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc2)_", "}
+		set sc3 = ..ValidateGender(pPerson.Gender, pPerson.IDNumber)
+		if sc3 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc3)_", "}
+		set sc4 = ..ValidateDateOfBirth(pPerson.DateOfBirth, pPerson.IDNumber)
+		if sc4 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc4)}
+		if scCombo '= "" {
+			set sc = $$$ERROR($$$GeneralError,"File Validation ERROR.Check Log File")
+
+			Set tFile=##class(%File).%New("C:\InterSystems\IRIS\CSP\personmanager\Flat Files\Error Logs\Logs.txt")
+			Do tFile.Open("AWS")
+			Do tFile.WriteLine("")
+			Do tFile.WriteLine($ZDATETIME($NOW(),1,1,3)_" - "_pPerson.FirstName_", "_pPerson.LastName_", "_pPerson.IDNumber)
+			Do tFile.WriteLine("                        - "_$Extract(scCombo,1,250))
+			Do tFile.WriteLine("________________________________________________________________________________________________")
+			do tFile.Close()
+
+		}
+		
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ValidateUpdatePerson">
+<Description><![CDATA[
+<FONT size="2">Validates a UpdatePersonRequest Message</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pPerson:PManager.Message.Request</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		if pPerson.ContactNumber '= "" {$$$ThrowOnError(..ValidateContactNumber(pPerson.ContactNumber))}
+		$$$ThrowOnError(..ValidateID(pPerson.IDNumber))
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Package name="PManager" sqlname="PManager"/>
+</Export>
