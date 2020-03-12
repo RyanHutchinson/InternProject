@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-10 16:30:05">
+<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-12 14:21:05">
 <Class name="PManager.API.REST">
 <Description><![CDATA[
 <font color="green", size="1"><i>
@@ -148,6 +148,115 @@ and pipes them into the relevant Production Service
 	quit 1 //always quit 1 because of reasons I don't understand
 ]]></Implementation>
 </Method>
+</Class>
+
+
+<Class name="PManager.ErrorHandling.FileErrors">
+<Super>%Persistent</Super>
+<TimeChanged>65450,48495.689636</TimeChanged>
+<TimeCreated>65450,46284.642371</TimeCreated>
+
+<Property name="TimeStamp">
+<Type>%String</Type>
+</Property>
+
+<Property name="Type">
+<Type>%String</Type>
+</Property>
+
+<Property name="FirstName">
+<Type>%String</Type>
+</Property>
+
+<Property name="LastName">
+<Type>%String</Type>
+</Property>
+
+<Property name="IDNumber">
+<Type>%String</Type>
+</Property>
+
+<Property name="ContactNumber">
+<Description>
+RSA CellphoneNumber</Description>
+<Type>%String</Type>
+</Property>
+
+<Property name="Gender">
+<Type>%String</Type>
+<Parameter name="DISPLAYLIST" value=",Male,Female,Other"/>
+<Parameter name="VALUELIST" value=",1,2,3"/>
+</Property>
+
+<Property name="Member">
+<Description>
+Member Status(1-Member, 0-NonMember)</Description>
+<Type>%Boolean</Type>
+</Property>
+
+<Property name="DateOfBirth">
+<Description>
+$HORLOG Date Format</Description>
+<Type>%Date</Type>
+</Property>
+
+<Property name="Dependants">
+<Description>
+Number of Dependants</Description>
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Errors">
+<Type>%String</Type>
+<Parameter name="MAXLEN" value="512"/>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^PManager.ErrorH3D6D.FileErrorsD</DataLocation>
+<DefaultData>FileErrorsDefaultData</DefaultData>
+<IdLocation>^PManager.ErrorH3D6D.FileErrorsD</IdLocation>
+<IndexLocation>^PManager.ErrorH3D6D.FileErrorsI</IndexLocation>
+<StreamLocation>^PManager.ErrorH3D6D.FileErrorsS</StreamLocation>
+<Data name="FileErrorsDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Type</Value>
+</Value>
+<Value name="3">
+<Value>FirstName</Value>
+</Value>
+<Value name="4">
+<Value>LastName</Value>
+</Value>
+<Value name="5">
+<Value>IDNumber</Value>
+</Value>
+<Value name="6">
+<Value>ContactNumber</Value>
+</Value>
+<Value name="7">
+<Value>Gender</Value>
+</Value>
+<Value name="8">
+<Value>Member</Value>
+</Value>
+<Value name="9">
+<Value>DateOfBirth</Value>
+</Value>
+<Value name="10">
+<Value>Dependants</Value>
+</Value>
+<Value name="11">
+<Value>Errors</Value>
+</Value>
+<Value name="12">
+<Value>TimeStamp</Value>
+</Value>
+</Data>
+</Storage>
 </Class>
 
 
@@ -357,6 +466,18 @@ Number of Dependants</Description>
 </Class>
 
 
+<Class name="PManager.Message.WriteToLogRequest">
+<Language>objectscript</Language>
+<Super>Ens.Request</Super>
+<TimeChanged>65450,46743.935803</TimeChanged>
+<TimeCreated>65450,46474.366093</TimeCreated>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
 <Class name="PManager.Operation.AddPerson">
 <Description><![CDATA[
 <font color="green", size="1"><i>
@@ -368,7 +489,7 @@ Number of Dependants</Description>
 Adds a new <class>PManager.Person</class> to the MODEL]]></Description>
 <Language>objectscript</Language>
 <Super>Ens.BusinessOperation</Super>
-<TimeChanged>65447,54505.911531</TimeChanged>
+<TimeChanged>65450,45568.947738</TimeChanged>
 <TimeCreated>65437,30176.7596</TimeCreated>
 
 <Parameter name="INVOCATION">
@@ -387,11 +508,9 @@ sends a response via pResponse</font>]]></Description>
 	set pResponse = ##class(PManager.Message.Response).%New()
 	try {
 		//check for duplicate	
-		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
-		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
-		if tPerson {set pResponse.Response = "Person Already Exists..."}
+		set exists = ##class(PManager.Utilities).ValidatePersonExists(pRequest.IDNumber)
 		// Insert Person
-		else {
+		if exists '= $$$OK{
 			set newPerson = ##class(PManager.Person).%New()
 			set newPerson.FirstName = pRequest.FirstName
 			set newPerson.LastName = pRequest.LastName
@@ -403,10 +522,12 @@ sends a response via pResponse</font>]]></Description>
 			set newPerson.Dependants = pRequest.Dependants
 			$$$ThrowOnError(newPerson.%Save())
 			set pResponse.Response = "Client added..."
+		} else {
+			set pResponse.Response = "Person Already Exists..."
 		}
 	} catch ex {
 		if sc = $$$OK {set sc = ex.AsStatus()}
-		set pResponse.Response = "Something went wrong with the Business ADD Operation"
+		set pResponse.Response = "Something went wrong on the server..."
 	}
 	return sc
 ]]></Implementation>
@@ -435,7 +556,7 @@ sends a response via pResponse</font>]]></Description>
 Deletes a <class>PManager.Person</class> in the MODEL]]></Description>
 <Language>objectscript</Language>
 <Super>Ens.BusinessOperation</Super>
-<TimeChanged>65447,54331.085511</TimeChanged>
+<TimeChanged>65450,45579.302275</TimeChanged>
 <TimeCreated>65437,31453.60449</TimeCreated>
 
 <Parameter name="INVOCATION">
@@ -453,16 +574,15 @@ sends a response via pResponse</font>]]></Description>
 	set sc = $$$OK
 	set pResponse = ##class(PManager.Message.Response).%New()
 	try {
-		//check for duplicate
-		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
-		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
-		if 'tPerson {set pResponse.Response = "No Such Person..."}
-		//Do the Delete
-		else {
+		//check for Person	
+		set exists = ##class(PManager.Utilities).ValidatePersonExists(pRequest.IDNumber)
+		if exists = $$$OK{ // Do the Delete
 			TStart 
 			$$$ThrowOnError(##class(PManager.Person).IDNumberIndexDelete(pRequest.IDNumber))
 			set pResponse.Response = "Person Deleted..."
 			TCommit 
+		} else { //Set the error
+			set pResponse.Response = "Person does not exist..."
 		}
 	} catch ex {
 		TROllback 1
@@ -496,7 +616,7 @@ sends a response via pResponse</font>]]></Description>
 		Gets and returns a specific <class>PManager.Person</class>'s data]]></Description>
 <Language>objectscript</Language>
 <Super>Ens.BusinessOperation</Super>
-<TimeChanged>65447,54483.75162</TimeChanged>
+<TimeChanged>65450,45586.035574</TimeChanged>
 <TimeCreated>65437,29586.119493</TimeCreated>
 
 <Parameter name="INVOCATION">
@@ -513,12 +633,9 @@ sends a response via pResponse</font>]]></Description>
 	set sc = $$$OK
 	set pResponse = ##class(PManager.Message.Response).%New()
 	try {
-		//check for person
-		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
-		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
-		if 'tPerson {set pResponse.Response = "No Such Person..."}
-		//Do the Get
-		else {
+		//check for Person
+		set exists = ##class(PManager.Utilities).ValidatePersonExists(pRequest.IDNumber)
+		if exists = $$$OK { // Do the Get
 			TStart 
 			set tPerson = ##class(PManager.Person).IDNumberIndexOpen(pRequest.IDNumber)
 			set pResponse.FirstName = tPerson.FirstName
@@ -530,6 +647,8 @@ sends a response via pResponse</font>]]></Description>
 			set pResponse.DateOfBirth = tPerson.DateOfBirth
 			set pResponse.Dependants = tPerson.Dependants
 			TCommit 
+		} else { //Set the error
+			set pResponse.Response = "Person Does not exist..."
 		}
 	} catch ex {
 		TROllback 1
@@ -552,6 +671,50 @@ sends a response via pResponse</font>]]></Description>
 </Class>
 
 
+<Class name="PManager.Operation.LogFileWriter">
+<Language>objectscript</Language>
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65450,51231.927216</TimeChanged>
+<TimeCreated>65450,46524.557811</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="PushToLog">
+<FormalSpec>pRequest:PManager.Message.WriteToLogRequest,*pResponse:PManager.Message.Response</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	set pResponse = ##class(PManager.Message.Response).%New()
+	set rset = ##class(%SQL.Statement).%ExecDirect(,"SELECT TOP 1 * FROM PManager_ErrorHandling.FileErrors ORDER BY ID DESC")
+	do rset.%Next()
+	// SQL to grab the last row
+
+	Set tFile=##class(%File).%New("C:\InterSystems\IRIS\CSP\personmanager\Flat Files\Error Logs\Logs.txt")
+	Do tFile.Open("AWS")
+	Do tFile.WriteLine(rset.%Get("TimeStamp")_"||"_rset.%Get("Type")_"||"_rset.%Get("FirstName")_"||"_rset.%Get("LastName")_"||"_rset.%Get("IDNumber")_"||"_rset.%Get("ContactNumber")_"||"_rset.%Get("Gender")_"||"_rset.%Get("Member")_"||"_rset.%Get("DateOfBirth")_"||"_rset.%Get("Dependants"))
+	Do tFile.WriteLine("                       ||"_rset.%Get("Errors"))
+	Do tFile.WriteLine("________________________________________________________________________________________________________________________________________________________________________________________________________________________________")
+	do tFile.Close()
+
+	set pResponse.Response = "Error Log Written"
+	return sc
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="PManager.Message.WriteToLogRequest"> 
+		<Method>PushToLog</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
 <Class name="PManager.Operation.UpdatePerson">
 <Description><![CDATA[
 <font color="green", size="1"><i>
@@ -563,7 +726,7 @@ sends a response via pResponse</font>]]></Description>
 Updates a <class>PManager.Person</class> in the MODEL]]></Description>
 <Language>objectscript</Language>
 <Super>Ens.BusinessOperation</Super>
-<TimeChanged>65447,54493.05161</TimeChanged>
+<TimeChanged>65450,45591.731839</TimeChanged>
 <TimeCreated>65437,31235.860713</TimeCreated>
 
 <Parameter name="INVOCATION">
@@ -582,11 +745,8 @@ sends a response via pResponse</font>]]></Description>
 	set pResponse = ##class(PManager.Message.Response).%New()
 	try {
 		//check for Person
-		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pRequest.IDNumber)
-		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
-		if 'tPerson {set pResponse.Response = "No Such Person..."}
-		//Do the Update
-		else {
+		set exists = ##class(PManager.Utilities).ValidatePersonExists(pRequest.IDNumber)
+		if exists = $$$OK{ // Do the Update
 			TStart 
 			set Person = ##class(PManager.Person).IDNumberIndexOpen(pRequest.IDNumber)
 			if pRequest.FirstName '= "" {set Person.FirstName = pRequest.FirstName}
@@ -597,6 +757,8 @@ sends a response via pResponse</font>]]></Description>
 			$$$ThrowOnError(Person.%Save())
 			TCommit 
 			set pResponse.Response = "Person Updated"
+		} else { // Set the error
+			set pResponse.Response = "Person does not exist"
 		}
 	} catch ex {
 		TROllback 1
@@ -621,7 +783,7 @@ sends a response via pResponse</font>]]></Description>
 
 <Class name="PManager.PManagerProd">
 <Super>Ens.Production</Super>
-<TimeChanged>65448,58562.515046</TimeChanged>
+<TimeChanged>65450,51240.951466</TimeChanged>
 <TimeCreated>65437,33262.61679</TimeCreated>
 
 <XData name="ProductionDefinition">
@@ -655,6 +817,8 @@ sends a response via pResponse</font>]]></Description>
     <Setting Target="Adapter" Name="WorkPath">C:\InterSystems\IRIS\CSP\personmanager\Flat Files\InProcess\</Setting>
   </Item>
   <Item Name="CRMIterator" Category="" ClassName="PManager.Process.test" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="LogFileWriter" Category="" ClassName="PManager.Operation.LogFileWriter" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
   </Item>
 </Production>
 ]]></Data>
@@ -781,7 +945,7 @@ Do not make direct use of this class in your application.</Description>
 <IncludeCode/>
 <ProcedureBlock>1</ProcedureBlock>
 <Super>Ens.BP.Context</Super>
-<TimeChanged>65448,58541.049054</TimeChanged>
+<TimeChanged>65450,50077.30244</TimeChanged>
 <TimeCreated>65448,29183.21757</TimeCreated>
 <GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
 
@@ -881,6 +1045,24 @@ Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.
 ]]></Implementation>
 </Method>
 
+<Method name="OnResponse5">
+<Description>
+Response Handler for call to LogFileWriter</Description>
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,request:PManager.Message.Request,response:PManager.Message.Response,callrequest:PManager.Message.WriteToLogRequest,callresponse:PManager.Message.Response,callname:%String</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,response.Response=callresponse.Response
+ If $$$ISERR(status) Quit
+ } while (0)
+Exit Quit status
+Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.FILEProcess.Thread1","OnResponse5")
+ Goto Exit
+]]></Implementation>
+</Method>
+
 <Storage name="Default">
 <Type>%Storage.Persistent</Type>
 <DefaultData>ContextDefaultData1</DefaultData>
@@ -911,8 +1093,8 @@ Do not make direct use of this class in your application.</Description>
 <IncludeCode/>
 <ProcedureBlock>1</ProcedureBlock>
 <Super>Ens.BP.Thread</Super>
-<TimeChanged>65448,58541.721538</TimeChanged>
-<TimeCreated>65448,58541.022172</TimeCreated>
+<TimeChanged>65450,50078.047068</TimeChanged>
+<TimeCreated>65450,50077.274575</TimeCreated>
 <GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
 
 <Method name="S1">
@@ -1095,10 +1277,58 @@ Trap Set $ZT="",status=..ManageStatus(status,"S16") Goto Exit
  If $$$ISERR(status) Quit
  Set status=$$$OK,response.Response=context.scMessage
  If $$$ISERR(status) Quit
- Set ..%NextState="S2"
+ #; --- Begin Call Call Log File Writer ---
+ #; --- Begin Request ---
+ Set callrequest=##class(PManager.Message.WriteToLogRequest).%New()
+ If '$IsObject(callrequest) Set status=%objlasterror Quit
+ Set status=..MakeAsyncCall("OnResponse5","LogFileWriter",callrequest,"Call Log File Writer",1,0,"Call Log File Writer",1)
+ If $$$ISERR(status) Quit
+ Kill callrequest
+ #; --- End Request ---
+ #; --- End Call Call Log File Writer ---
+ Do ..%PendingResponses.Clear(),..%SyncResponses.Clear()
+ Set ..%SyncTimedOut=0,..%PendingTimeout="",..%PendingAlarmHandle="",..%SyncName=""
+ If ..%Process.IsResponsePending("Call Log File Writer") Do ..%PendingResponses.SetAt("","Call Log File Writer")
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S19"
+ } else {
+    Set ..%NextState="S18",..%Wait=1
+ }
  } while (0)
 Exit Quit ..ManageState(status)
 Trap Set $ZT="",status=..ManageStatus(status,"S17") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S18">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ If ..%PendingResponses.Count()=0 {
+    Set ..%NextState="S19"
+ } else {
+    Set ..%NextState="S18",..%Wait=1
+ }
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S18") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S19">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S19") Goto Exit
 ]]></Implementation>
 </Method>
 
@@ -1279,7 +1509,7 @@ Trap Set $ZT="",status=..ManageStatus(status,"S9") Goto Exit
 <Description>
 Process which Validates message data and routs to the correct operation.</Description>
 <Super>Ens.BusinessProcessBPL</Super>
-<TimeChanged>65448,58538.198499</TimeChanged>
+<TimeChanged>65450,50074.180973</TimeChanged>
 <TimeCreated>65447,42567.387667</TimeCreated>
 
 <XData name="BPL">
@@ -1355,6 +1585,12 @@ BPL Definition</Description>
 <![CDATA[ set context.scMessage = $SYSTEM.Status.GetErrorText(context.sc)]]]]><![CDATA[>
 </code>
 <assign name="Set Response" property="response.Response" value="context.scMessage" action="set" xpos='200' ypos='700' />
+<call name='Call Log File Writer' target='LogFileWriter' async='0' xpos='200' ypos='800' >
+<request type='PManager.Message.WriteToLogRequest' />
+<response type='PManager.Message.Response' >
+<assign property="response.Response" value="callresponse.Response" action="set" />
+</response>
+</call>
 </false>
 </if>
 </sequence>
@@ -3673,22 +3909,33 @@ Written by R.Hutchinson</br>
 	</br>
 	Collection of <class>PManager.Person</class> Validation methods]]></Description>
 <Super>Ens.Rule.FunctionSet</Super>
-<TimeChanged>65448,58886.245045</TimeChanged>
+<TimeChanged>65450,51537.301168</TimeChanged>
 <TimeCreated>65436,47509.769007</TimeCreated>
 
-<UDLText name="T">
-<Content><![CDATA[
-// Class PManager.Utilities Extends %RegisteredObject
-
-]]></Content>
-</UDLText>
-
-<UDLText name="T">
-<Content><![CDATA[
-// {
-
-]]></Content>
-</UDLText>
+<Method name="ValidatePersonExists">
+<Description><![CDATA[
+<FONT size="2">Validates a RSA ID Number using the <a href="https://en.wikipedia.org/wiki/Luhn_algorithm">Luhn Algorithm</a></br>
+Returns $$$OK if is valid</br>
+else returns 5001 "Not a valid ID Number" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pIDNumber:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		&sql(SELECT ID INTO :tPerson FROM PManager.Person WHERE IDNumber = :pIDNumber)
+		throw:(SQLCODE'=0)&&(SQLCODE'=100) ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)
+		if tPerson{
+			set sc = $$$OK
+		} else {
+			set sc = $$$ERROR($$$GeneralError,"Person Doesn't Exist")
+		}
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
 
 <Method name="ValidateID">
 <Description><![CDATA[
@@ -3789,6 +4036,26 @@ else returns 5001 "ID / Gender mismatch" or Exception</FONT>]]></Description>
 ]]></Implementation>
 </Method>
 
+<Method name="ValidateUpdatePerson">
+<Description><![CDATA[
+<FONT size="2">Validates a UpdatePersonRequest Message</br>
+Returns $$$OK if is valid</br>
+else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pPerson:PManager.Message.Request</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set sc = $$$OK
+	try {
+		if pPerson.ContactNumber '= "" {$$$ThrowOnError(..ValidateContactNumber(pPerson.ContactNumber))}
+		$$$ThrowOnError(..ValidateID(pPerson.IDNumber))
+	} catch ex {
+		if sc = $$$OK {set sc = ex.AsStatus()}
+	}
+	return sc
+]]></Implementation>
+</Method>
+
 <Method name="ValidateNewPerson">
 <Description><![CDATA[
 <FONT size="2">Validates a AddPersonRequest Message</br>
@@ -3823,47 +4090,38 @@ else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
 	set sc = $$$OK
 	try {
 		set scCombo = ""
-		set sc1 = ..ValidateContactNumber(pPerson.ContactNumber)
-		if sc1 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc1)_", "}
-		set sc2 = ..ValidateID(pPerson.IDNumber)
-		if sc2 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc2)_", "}
-		set sc3 = ..ValidateGender(pPerson.Gender, pPerson.IDNumber)
-		if sc3 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc3)_", "}
-		set sc4 = ..ValidateDateOfBirth(pPerson.DateOfBirth, pPerson.IDNumber)
-		if sc4 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc4)}
-		if scCombo '= "" {
+		set sc1 = ..ValidatePersonExists(pPerson.IDNumber)
+		if sc1 = $$$OK{ set scCombo = scCombo_"Person Already Exists || "}
+		set sc2 = ..ValidateContactNumber(pPerson.ContactNumber)
+		if sc2 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc2)_" || "}
+		set sc3 = ..ValidateID(pPerson.IDNumber)
+		if sc3 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc3)_" || "}
+		set sc4 = ..ValidateGender(pPerson.Gender, pPerson.IDNumber)
+		if sc4 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc4)_" || "}
+		set sc5 = ..ValidateDateOfBirth(pPerson.DateOfBirth, pPerson.IDNumber)
+		if sc5 '= $$$OK{ set scCombo = scCombo_$System.Status.GetErrorText(sc5)_" || "}
+		
+		if scCombo '= "" { //Write New Error to Error Table
+
+			set sc = $$$ERROR($$$GeneralError,"File Validation ERROR.Check Log File")
+			set errorObj = ##class(PManager.ErrorHandling.FileErrors).%New()
+
+			set errorObj.TimeStamp = $ZDATETIME($NOW(),1,1,3)
+			set errorObj.Type = pPerson.Type
+			set errorObj.FirstName = pPerson.FirstName
+			set errorObj.LastName = pPerson.LastName
+			set errorObj.IDNumber = pPerson.IDNumber
+			set errorObj.ContactNumber = pPerson.ContactNumber
+			set errorObj.Gender = pPerson.Gender
+			set errorObj.Member = pPerson.Member
+			set errorObj.DateOfBirth = pPerson.DateOfBirth
+			set errorObj.Dependants = pPerson.Dependants
+			set errorObj.Errors = scCombo
+
+			$$$ThrowOnError(errorObj.%Save())
 			set sc = $$$ERROR($$$GeneralError,"File Validation ERROR.Check Log File")
 
-			Set tFile=##class(%File).%New("C:\InterSystems\IRIS\CSP\personmanager\Flat Files\Error Logs\Logs.txt")
-			Do tFile.Open("AWS")
-			Do tFile.WriteLine("")
-			Do tFile.WriteLine($ZDATETIME($NOW(),1,1,3)_" - "_pPerson.FirstName_", "_pPerson.LastName_", "_pPerson.IDNumber)
-			Do tFile.WriteLine("                        - "_$Extract(scCombo,1,250))
-			Do tFile.WriteLine("________________________________________________________________________________________________")
-			do tFile.Close()
-
 		}
-		
-	} catch ex {
-		if sc = $$$OK {set sc = ex.AsStatus()}
-	}
-	return sc
-]]></Implementation>
-</Method>
-
-<Method name="ValidateUpdatePerson">
-<Description><![CDATA[
-<FONT size="2">Validates a UpdatePersonRequest Message</br>
-Returns $$$OK if is valid</br>
-else returns 5001 "RELEVANT MESSAGE" or Exception</FONT>]]></Description>
-<ClassMethod>1</ClassMethod>
-<FormalSpec>pPerson:PManager.Message.Request</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	set sc = $$$OK
-	try {
-		if pPerson.ContactNumber '= "" {$$$ThrowOnError(..ValidateContactNumber(pPerson.ContactNumber))}
-		$$$ThrowOnError(..ValidateID(pPerson.IDNumber))
 	} catch ex {
 		if sc = $$$OK {set sc = ex.AsStatus()}
 	}
