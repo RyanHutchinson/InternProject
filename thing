@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-13 11:47:57">
+<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-13 15:35:51">
 <Class name="PManager.API.REST">
 <Description><![CDATA[
 <font color="green", size="1"><i>
@@ -830,7 +830,7 @@ sends a response via pResponse</font>]]></Description>
 
 <Class name="PManager.PManagerProd">
 <Super>Ens.Production</Super>
-<TimeChanged>65451,31372.689839</TimeChanged>
+<TimeChanged>65451,55654.7633</TimeChanged>
 <TimeCreated>65437,33262.61679</TimeCreated>
 
 <XData name="ProductionDefinition">
@@ -866,6 +866,14 @@ sends a response via pResponse</font>]]></Description>
   <Item Name="CRMIterator" Category="" ClassName="PManager.Process.CRMIterator" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
   </Item>
   <Item Name="LogFileWriter" Category="" ClassName="PManager.Operation.LogFileWriter" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="Ens.Alert" Category="" ClassName="EnsLib.EMail.AlertOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="Credentials">Ryan Gmail</Setting>
+    <Setting Target="Adapter" Name="From">InternProject Production</Setting>
+    <Setting Target="Adapter" Name="Recipient">rhutchin@student.wethinkcode.co.za</Setting>
+    <Setting Target="Adapter" Name="SMTPPort">465</Setting>
+    <Setting Target="Adapter" Name="SMTPServer">smtp.gmail.com</Setting>
+    <Setting Target="Adapter" Name="SSLConfig">Gmail</Setting>
   </Item>
 </Production>
 ]]></Data>
@@ -992,9 +1000,14 @@ Do not make direct use of this class in your application.</Description>
 <IncludeCode/>
 <ProcedureBlock>1</ProcedureBlock>
 <Super>Ens.BP.Context</Super>
-<TimeChanged>65451,31545.906704</TimeChanged>
+<TimeChanged>65451,52425.929212</TimeChanged>
 <TimeCreated>65451,31318.132395</TimeCreated>
 <GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
+
+<Property name="IsError">
+<Type>%Integer</Type>
+<InitialExpression>0</InitialExpression>
+</Property>
 
 <Property name="Key">
 <Type>%Integer</Type>
@@ -1035,6 +1048,9 @@ Trap Set $ZT="",status=##class(Ens.Util.Error).EnsSystemError("PManager.Process.
 <Value name="2">
 <Value>tPDATA</Value>
 </Value>
+<Value name="3">
+<Value>IsError</Value>
+</Value>
 </Data>
 </Storage>
 </Class>
@@ -1050,8 +1066,8 @@ Do not make direct use of this class in your application.</Description>
 <IncludeCode/>
 <ProcedureBlock>1</ProcedureBlock>
 <Super>Ens.BP.Thread</Super>
-<TimeChanged>65451,31546.578852</TimeChanged>
-<TimeCreated>65451,31545.884136</TimeCreated>
+<TimeChanged>65451,52426.604503</TimeChanged>
+<TimeCreated>65451,52425.907541</TimeCreated>
 <GeneratedBy>Ens.BPL.Compiler.CLS</GeneratedBy>
 
 <Method name="S1">
@@ -1065,6 +1081,22 @@ Do not make direct use of this class in your application.</Description>
  } while (0)
 Exit Quit ..ManageState(status)
 Trap Set $ZT="",status=..ManageStatus(status,"S1") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S10">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=..%Process.SendAlert(##class(Ens.AlertRequest).%New($lb(..%Process.%ConfigName,"An Error has occurred in the File Process. Please check the log file to assess instruction error.")))
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S9"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S10") Goto Exit
 ]]></Implementation>
 </Method>
 
@@ -1128,8 +1160,11 @@ Trap Set $ZT="",status=..ManageStatus(status,"S3") Goto Exit
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
  Set $ZT="Trap",status=$$$OK do {
- Do process.ClearAllPendingResponses()
- Set ..%NextState="Stop"
+ If (context.IsError) {
+ Set ..%NextState="S10"
+ } else {
+ Set ..%NextState="S9"
+ }
  } while (0)
 Exit Quit ..ManageState(status)
 Trap Set $ZT="",status=..ManageStatus(status,"S4") Goto Exit
@@ -1161,10 +1196,59 @@ Trap Set $ZT="",status=..ManageStatus(status,"S5") Goto Exit
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
  Set $ZT="Trap",status=$$$OK do {
- Set ..%NextState="S2"
+ If (response.Response="Error Log Written") {
+ Set ..%NextState="S8"
+ } else {
+ Set ..%NextState="S7"
+ }
  } while (0)
 Exit Quit ..ManageState(status)
 Trap Set $ZT="",status=..ManageStatus(status,"S6") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S7">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set ..%NextState="S2"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S7") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S8">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Set status=$$$OK,context.IsError=1
+ If $$$ISERR(status) Quit
+ Set ..%NextState="S7"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S8") Goto Exit
+]]></Implementation>
+</Method>
+
+<Method name="S9">
+<FormalSpec>process:Ens.BusinessProcess,context:Ens.BP.Context,synctimedout:%Boolean,syncresponses:%ArrayOfObjects(ELEMENTTYPE="%Library.Persistent"),request:%Library.Persistent,response:%Library.Persistent</FormalSpec>
+<Language>objectscript</Language>
+<PublicList>process,context</PublicList>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ Set $ZT="Trap",status=$$$OK do {
+ Do process.ClearAllPendingResponses()
+ Set ..%NextState="Stop"
+ } while (0)
+Exit Quit ..ManageState(status)
+Trap Set $ZT="",status=..ManageStatus(status,"S9") Goto Exit
 ]]></Implementation>
 </Method>
 
@@ -1187,8 +1271,12 @@ Iterates over the <class>PManager.RecordMaps.Person.PDATA.PDATARecordMap</class>
 Transforms each PDATA into a <class>PManager.Message.Request</class>
 Forwards them onto <class>PManager.Process.FileProcess</class></br>]]></Description>
 <Super>Ens.BusinessProcessBPL</Super>
-<TimeChanged>65451,31623.597181</TimeChanged>
+<TimeChanged>65451,52423.24247</TimeChanged>
 <TimeCreated>65451,31311.835602</TimeCreated>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
 
 <XData name="BPL">
 <Description>
@@ -1199,9 +1287,10 @@ BPL Definition</Description>
 <context>
 <property name='Key' type='%Integer' initialexpression='1' instantiate='0' />
 <property name='tPDATA' type='PManager.RecordMaps.Person.PDATA.PDATARecord' instantiate='0' />
+<property name='IsError' type='%Integer' initialexpression='0' instantiate='0' />
 </context>
-<sequence xend='200' yend='350' >
-<foreach property='request.PDATA' key='context.Key' xpos='200' ypos='250' xend='200' yend='450' >
+<sequence xend='200' yend='700' >
+<foreach name='PDATA' property='request.PDATA' key='context.Key' xpos='200' ypos='250' xend='200' yend='800' >
 <assign name="Set tPDATA" property="context.tPDATA" value="request.PDATA.GetAt(context.Key)" action="set" xpos='200' ypos='250' />
 <call name='FILE Process' target='FILEProcess' async='0' xpos='200' ypos='350' >
 <request type='PManager.RecordMaps.Person.PDATA.PDATARecord' >
@@ -1211,15 +1300,23 @@ BPL Definition</Description>
 <assign property="response" value="callresponse" action="set" />
 </response>
 </call>
+<if condition='response.Response="Error Log Written"' xpos='200' ypos='450' xend='200' yend='700' >
+<true>
+<assign property="context.IsError" value="1" action="set" xpos='335' ypos='600' />
+</true>
+</if>
 </foreach>
+<if name='Any Errors?' condition='context.IsError' xpos='200' ypos='350' xend='200' yend='600' >
+<true>
+<alert value='"An Error has occurred in the File Process. Please check the log file to assess instruction error."' xpos='335' ypos='500' >
+<annotation><![CDATA[Send an alert for the ENS.Alert operation to pick up and email out]]]]><![CDATA[></annotation>
+</alert>
+</true>
+</if>
 </sequence>
 </process>
 ]]></Data>
 </XData>
-
-<Storage name="Default">
-<Type>%Storage.Persistent</Type>
-</Storage>
 </Class>
 
 
