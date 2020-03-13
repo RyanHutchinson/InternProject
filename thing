@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-13 09:40:30">
+<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.1.1 (Build 612U)" ts="2020-03-13 11:47:57">
 <Class name="PManager.API.REST">
 <Description><![CDATA[
 <font color="green", size="1"><i>
@@ -3847,7 +3847,7 @@ by user UnknownUser</Description>
 
 <Class name="PManager.RulesAndTransforms.Transform.PDATAtoRequest">
 <Super>Ens.DataTransformDTL</Super>
-<TimeChanged>65448,56870.921612</TimeChanged>
+<TimeChanged>65451,38848.296892</TimeChanged>
 <TimeCreated>65448,51237.821058</TimeCreated>
 <DependsOn>PManager.RecordMaps.Person.PDATA.PDATARecord,PManager.Message.Request</DependsOn>
 
@@ -3868,10 +3868,10 @@ by user UnknownUser</Description>
 <Data><![CDATA[
 <transform sourceClass='PManager.RecordMaps.Person.PDATA.PDATARecord' targetClass='PManager.Message.Request' create='new' language='objectscript' >
 <assign value='source.Type' property='target.Type' action='set' />
-<assign value='source.FirstName' property='target.FirstName' action='set' />
-<assign value='source.LastName' property='target.LastName' action='set' />
-<assign value='source.IDNumber' property='target.IDNumber' action='set' />
-<assign value='source.ContactNumber' property='target.ContactNumber' action='set' />
+<assign value='..ToUpper(source.FirstName)' property='target.FirstName' action='set' />
+<assign value='..ToUpper(source.LastName)' property='target.LastName' action='set' />
+<assign value='..Strip(source.IDNumber,"*WA")' property='target.IDNumber' action='set' />
+<assign value='..Strip(source.ContactNumber,"*WA")' property='target.ContactNumber' action='set' />
 <assign value='source.Gender' property='target.Gender' action='set' />
 <assign value='source.Member' property='target.Member' action='set' />
 <assign value='source.DateOfBirth' property='target.DateOfBirth' action='set' />
@@ -3979,7 +3979,7 @@ Written by R.Hutchinson</br>
 	</br>
 	Collection of <class>PManager.Person</class> Validation methods]]></Description>
 <Super>Ens.Rule.FunctionSet</Super>
-<TimeChanged>65451,32146.108134</TimeChanged>
+<TimeChanged>65451,42419.552879</TimeChanged>
 <TimeCreated>65436,47509.769007</TimeCreated>
 
 <Method name="ValidatePersonExists">
@@ -4064,6 +4064,8 @@ else returns 5001 "Not a valid Cellphone Number" or Exception</FONT>]]></Descrip
 	if $Length(pContactNumber) '= 10 { //Check length
 		set sc = $$$ERROR($$$GeneralError,"Not a valid Cellphone Number")
 	} elseif $Extract(pContactNumber, 1) '= 0 { // Check prefix digit
+		set sc = $$$ERROR($$$GeneralError,"Not a valid Cellphone Number")
+	} elseif $IsValidnum(pContactNumber) '= 1{
 		set sc = $$$ERROR($$$GeneralError,"Not a valid Cellphone Number")
 	}
 	return sc
